@@ -1,0 +1,63 @@
+syntax = "proto3";
+package lithengine;
+
+option go_package = "github.com/liangdas/lithengine/lithengine";
+
+// 结构体类型，函数，代码块也被认为是一个特殊的结构体
+enum StructType {
+    Int64 = 0;
+    String = 1;
+    double=2;
+    bool=3;
+    nil=4;
+    function=5; //函数，会在【传参前先执行】得到结果
+    closure=6;//闭包函数，会作为子针参数传递【传参前不执行】
+    block=7;//代码块，本质是一系列函数逻辑组合 使用者可以定义一些通用的代码块方便后续复用
+}
+
+// 结构体定义
+message Struct {
+  // @inject_tag: json:"type,omitempty"
+  StructType structType=1;
+  int64 int64=2;
+  string string=3;
+  double double=4;
+  bool bool =5;
+  string block=7;
+  //Function function=6;
+  // @inject_tag: json:"fid,omitempty"
+  string funcId=10;  //函数ID
+  // @inject_tag: json:"name,omitempty"
+  string funcName=11; //函数名称
+  // @inject_tag: json:"schema,omitempty"
+  string funcSchema=12;  //函数定义
+  // @inject_tag: json:"input,omitempty"
+  repeated Struct funcInput=13; //函数的输入
+  map<string,Struct> args=14;//环境变量
+}
+
+// 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验
+message FunctionSchema {
+    string id=1;
+    string name=2;
+    repeated Struct input=3;
+    repeated Struct output=4;
+    int64 number_of_inputs=5;
+    int64 number_of_outputs=6;
+}
+
+// 函数结构体定义
+message Function {
+  string id=1;  //函数ID
+  string name=2; //函数名称
+  string schema=3;  //函数定义
+  repeated Struct input=4; //函数的输入
+}
+
+// 规则存储结构定义
+message Engine {
+  string name=1;
+  map<string,Struct> block=2; //代码块，使用者可以定义一些通用的代码块方便后续复用
+  Struct runExpr =3;//运算表达式
+  Struct resultExpr=4; //通过运算表达式得出的结果，判断执行后续函数【可选】
+}
