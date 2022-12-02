@@ -8,31 +8,31 @@
 ```
 ```
 engine := NewBaseEngine()
-	output, err := engine.ExecParse(context.Background(), []byte(
-		`{
-			"type": 5,
-			"fid": "=",
-			"input": [
-				{
-					"type": 5,
-					"fid": "+",
-					"input": [
-						{
-							"int64": 10
-						},
-						{
-							"type": 2,
-							"double": 15
-						}
-					]
-				},
-				{
-					"type": 2,
-					"double": 25
-				}
-			]
-		}`,
-	))
+output, err := engine.ExecParse(context.Background(), []byte(
+    `{
+        "type": 5,
+        "fid": "=",
+        "input": [
+            {
+                "type": 5,
+                "fid": "+",
+                "input": [
+                    {
+                        "int64": 10
+                    },
+                    {
+                        "type": 2,
+                        "double": 15
+                    }
+                ]
+            },
+            {
+                "type": 2,
+                "double": 25
+            }
+        ]
+    }`,
+))
 ```
 更多示例请见 engine_test.go 
 #支持数据类型
