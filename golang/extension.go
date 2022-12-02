@@ -48,14 +48,14 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 			hasType = true
 		}
 	}
-	if i, ok := m["fid"]; ok {
+	if i, ok := m["func"]; ok {
 		s.FuncId = i.(string)
 		if !hasType {
 			s.StructType = StructType_function
 			hasType = true
 		}
 	}
-	if i, ok := m["cid"]; ok {
+	if i, ok := m["closure"]; ok {
 		s.ClosureId = i.(string)
 		if !hasType {
 			s.StructType = StructType_closure
@@ -63,10 +63,10 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 		}
 	}
 	if i, ok := m["name"]; ok {
-		s.FuncName = i.(string)
+		s.Name = i.(string)
 	}
 	if i, ok := m["schema"]; ok {
-		s.FuncSchema = i.(string)
+		s.Schema = i.(string)
 	}
 	if i, ok := m["input"]; ok {
 		intputs := i.([]interface{})
@@ -127,14 +127,14 @@ func MapToStruct(m map[string]interface{}) *Struct {
 			hasType = true
 		}
 	}
-	if i, ok := m["fid"]; ok {
+	if i, ok := m["func"]; ok {
 		s.FuncId = i.(string)
 		if !hasType {
 			s.StructType = StructType_function
 			hasType = true
 		}
 	}
-	if i, ok := m["cid"]; ok {
+	if i, ok := m["closure"]; ok {
 		s.ClosureId = i.(string)
 		if !hasType {
 			s.StructType = StructType_closure
@@ -142,10 +142,10 @@ func MapToStruct(m map[string]interface{}) *Struct {
 		}
 	}
 	if i, ok := m["name"]; ok {
-		s.FuncName = i.(string)
+		s.Name = i.(string)
 	}
 	if i, ok := m["schema"]; ok {
-		s.FuncSchema = i.(string)
+		s.Schema = i.(string)
 	}
 	if i, ok := m["input"]; ok {
 		intputs := i.([]interface{})

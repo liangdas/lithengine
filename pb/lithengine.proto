@@ -25,14 +25,14 @@ message Struct {
   bool bool =5;
   string block=7;
   //Function function=6;
-  // @inject_tag: json:"fid,omitempty"
+  // @inject_tag: json:"func,omitempty"
   string funcId=10;  //函数ID
-  // @inject_tag: json:"cid,omitempty"
+  // @inject_tag: json:"closure,omitempty"
   string closureId=11;  //closure函数ID
   // @inject_tag: json:"name,omitempty"
-  string funcName=12; //函数名称
+  string name=12; //函数名称
   // @inject_tag: json:"schema,omitempty"
-  string funcSchema=13;  //函数定义
+  string schema=13;  //函数定义
   // @inject_tag: json:"input,omitempty"
   repeated Struct funcInput=14; //函数的输入
   map<string,Struct> args=15;//环境变量

@@ -10,10 +10,10 @@
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-        "fid": "=",
+        "func": "=",
         "input": [
             {
-                "fid": "+",
+                "func": "+",
                 "input": [
                     {"int64": 10},
                     {"double": 15},
@@ -22,7 +22,7 @@ output, err := engine.ExecParse(context.Background(), []byte(
             },
             {"double": 30}
         ]
-    }`,
+	}`,
 ))
 ```
 更多示例请见 engine_test.go 

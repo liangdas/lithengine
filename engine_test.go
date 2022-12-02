@@ -96,7 +96,7 @@ func TestFunction(t *testing.T) {
 	isPay := &pb.Struct{
 		StructType: pb.StructType_function,
 		FuncId:     "isPay",
-		FuncName:   "是否充值",
+		Name:       "是否充值",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
 				StructType: pb.StructType_String,
@@ -232,7 +232,7 @@ func TestIf(t *testing.T) {
 	isPay := &pb.Struct{
 		StructType: pb.StructType_function,
 		FuncId:     "isPay",
-		FuncName:   "是否充值",
+		Name:       "是否充值",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
 				StructType: pb.StructType_String,
@@ -272,7 +272,7 @@ func TestCase(t *testing.T) {
 			&pb.Struct{
 				StructType: pb.StructType_function,
 				FuncId:     "userRiskLevel",
-				FuncName:   "用户风险等级",
+				Name:       "用户风险等级",
 				FuncInput: []*pb.Struct{
 					&pb.Struct{
 						StructType: pb.StructType_String,
@@ -324,10 +324,10 @@ func TestBlock(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"fid": "&&",
+				"func": "&&",
 				"input": [
 					{
-						"fid": "isPay",
+						"func": "isPay",
 						"name": "是否充值",
 						"input": [
 							{
@@ -336,10 +336,10 @@ func TestBlock(t *testing.T) {
 						]
 					},
 					{
-						"fid": "=",
+						"func": "=",
 						"input": [
 							{
-								"fid": "+",
+								"func": "+",
 								"input": [
 									{
 										"int64": 10
@@ -372,14 +372,14 @@ func TestArgs(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"fid": "&&",
+				"func": "&&",
 				"input": [
 					{
-						"fid": "isPay",
+						"func": "isPay",
 						"name": "是否充值",
 						"input": [
 							{
-								"fid": "args",
+								"func": "args",
 								"input": [
 									{
 										"string": "uid"
@@ -389,10 +389,10 @@ func TestArgs(t *testing.T) {
 						]
 					},
 					{
-						"fid": "=",
+						"func": "=",
 						"input": [
 							{
-								"fid": "+",
+								"func": "+",
 								"input": [
 									{
 										"int64": 10
@@ -432,10 +432,10 @@ func TestEngine_ExecParse(t *testing.T) {
 	engine := NewBaseEngine()
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
-			"fid": "=",
+			"func": "=",
 			"input": [
 				{
-					"fid": "+",
+					"func": "+",
 					"input": [
 						{"int64": 10},
 						{"double": 15},
