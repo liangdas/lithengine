@@ -15,17 +15,12 @@ output, err := engine.ExecParse(context.Background(), []byte(
             {
                 "fid": "+",
                 "input": [
-                    {
-                        "int64": 10
-                    },
-                    {
-                        "double": 15
-                    }
+                    {"int64": 10},
+                    {"double": 15},
+                    {"double": 5}
                 ]
             },
-            {
-                "double": 25
-            }
+            {"double": 30}
         ]
     }`,
 ))
