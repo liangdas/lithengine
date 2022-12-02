@@ -324,39 +324,32 @@ func TestBlock(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"type": 5,
 				"fid": "&&",
 				"input": [
 					{
-						"type": 5,
 						"fid": "isPay",
 						"name": "是否充值",
 						"input": [
 							{
-								"type": 1,
 								"string": "111"
 							}
 						]
 					},
 					{
-						"type": 5,
 						"fid": "=",
 						"input": [
 							{
-								"type": 5,
 								"fid": "+",
 								"input": [
 									{
 										"int64": 10
 									},
 									{
-										"type": 2,
 										"double": 15
 									}
 								]
 							},
 							{
-								"type": 2,
 								"double": 25
 							}
 						]
@@ -379,20 +372,16 @@ func TestArgs(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"type": 5,
 				"fid": "&&",
 				"input": [
 					{
-						"type": 5,
 						"fid": "isPay",
 						"name": "是否充值",
 						"input": [
 							{
-								"type": 5,
 								"fid": "args",
 								"input": [
 									{
-										"type": 1,
 										"string": "uid"
 									}
 								]
@@ -400,24 +389,20 @@ func TestArgs(t *testing.T) {
 						]
 					},
 					{
-						"type": 5,
 						"fid": "=",
 						"input": [
 							{
-								"type": 5,
 								"fid": "+",
 								"input": [
 									{
 										"int64": 10
 									},
 									{
-										"type": 2,
 										"double": 15
 									}
 								]
 							},
 							{
-								"type": 2,
 								"double": 25
 							}
 						]
@@ -447,24 +432,20 @@ func TestEngine_ExecParse(t *testing.T) {
 	engine := NewBaseEngine()
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
-			"type": 5,
 			"fid": "=",
 			"input": [
 				{
-					"type": 5,
 					"fid": "+",
 					"input": [
 						{
 							"int64": 10
 						},
 						{
-							"type": 2,
 							"double": 15
 						}
 					]
 				},
 				{
-					"type": 2,
 					"double": 25
 				}
 			]

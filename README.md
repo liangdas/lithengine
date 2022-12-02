@@ -10,24 +10,20 @@
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-        "type": 5,
         "fid": "=",
         "input": [
             {
-                "type": 5,
                 "fid": "+",
                 "input": [
                     {
                         "int64": 10
                     },
                     {
-                        "type": 2,
                         "double": 15
                     }
                 ]
             },
             {
-                "type": 2,
                 "double": 25
             }
         ]

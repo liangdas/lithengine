@@ -1,6 +1,6 @@
 export PATH="`pwd`/:$PATH"
 
-rm -rf ./golang/*
+rm -rf ./golang/lithengine.pb.go
 
 ls ./pb/*.proto | xargs protoc -I=./pb/ --go_out=./golang --go_opt=paths=source_relative
 
