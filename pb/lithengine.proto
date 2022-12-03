@@ -23,8 +23,8 @@ message Struct {
   string string=3;
   double double=4;
   bool bool =5;
+  bool nil=6;
   string block=7;
-  //Function function=6;
   // @inject_tag: json:"func,omitempty"
   string funcId=10;  //函数ID
   // @inject_tag: json:"closure,omitempty"
@@ -46,20 +46,4 @@ message FunctionSchema {
     repeated Struct output=4;
     int64 number_of_inputs=5;
     int64 number_of_outputs=6;
-}
-
-// 函数结构体定义
-message Function {
-  string id=1;  //函数ID
-  string name=2; //函数名称
-  string schema=3;  //函数定义
-  repeated Struct input=4; //函数的输入
-}
-
-// 规则存储结构定义
-message Engine {
-  string name=1;
-  map<string,Struct> block=2; //代码块，使用者可以定义一些通用的代码块方便后续复用
-  Struct runExpr =3;//运算表达式
-  Struct resultExpr=4; //通过运算表达式得出的结果，判断执行后续函数【可选】
 }

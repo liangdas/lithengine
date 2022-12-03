@@ -40,6 +40,7 @@ func init() {
 		"case":     Case,
 		"int64":    Int64,
 		"args":     Args,
+		"isType":   IsType,
 	}
 	_blockMap = map[string]*pb.Struct{}
 }
@@ -57,6 +58,23 @@ func Args(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 			r,
 		}, nil
 	}
+}
+
+func IsType(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) != 2 {
+		return nil, errors.New("is input len  != 2")
+	}
+
+	a := inputs[0]
+	b := inputs[1]
+
+	if a.StructType != b.StructType {
+		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
+	}
+	return []*pb.Struct{&pb.Struct{
+		StructType: pb.StructType_bool,
+		Bool:       true,
+	}}, nil
 }
 
 func Add(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
@@ -295,7 +313,9 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	case pb.StructType_String:
 		output.Bool = strings.Compare(a.String_, b.String_) == 0
 	case pb.StructType_function:
-		return nil, errors.New("Function cannot be compared")
+		return nil, errors.New("function cannot be compared")
+	case pb.StructType_nil:
+		output.Bool = true
 	}
 
 	return []*pb.Struct{output}, nil

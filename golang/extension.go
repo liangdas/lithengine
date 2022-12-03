@@ -41,6 +41,13 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 			hasType = true
 		}
 	}
+	if i, ok := m["nil"]; ok {
+		s.Bool = i.(bool)
+		if !hasType {
+			s.StructType = StructType_nil
+			hasType = true
+		}
+	}
 	if i, ok := m["block"]; ok {
 		s.Block = i.(string)
 		if !hasType {
@@ -117,6 +124,13 @@ func MapToStruct(m map[string]interface{}) *Struct {
 		s.Bool = i.(bool)
 		if !hasType {
 			s.StructType = StructType_bool
+			hasType = true
+		}
+	}
+	if i, ok := m["nil"]; ok {
+		s.Bool = i.(bool)
+		if !hasType {
+			s.StructType = StructType_nil
 			hasType = true
 		}
 	}

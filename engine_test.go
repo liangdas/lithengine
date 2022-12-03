@@ -3,18 +3,27 @@ package lithengine
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	pb "github.com/liangdas/lithengine/golang"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var rfuncMap map[string]Function
-var rblockMap map[string]*pb.Struct
+var rFuncMap map[string]Function
+var rBlockMap map[string]*pb.Struct
 
 func init() {
-	rfuncMap = map[string]Function{
+	rFuncMap = map[string]Function{
 		"isPay": func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+			if len(inputs) < 1 {
+				if len(inputs) != 1 {
+					return nil, errors.New("not input len  != 1")
+				}
+			}
+			if inputs[0].StructType != pb.StructType_String {
+				return nil, errors.New(fmt.Sprintf("%v not string", inputs[0].StructType.String()))
+			}
 			userId := inputs[0].String_
 			isPay := false
 			if userId == "111" {
@@ -36,11 +45,11 @@ func init() {
 			}, nil
 		},
 	}
-	rblockMap = map[string]*pb.Struct{}
+	rBlockMap = map[string]*pb.Struct{}
 }
 
 func TestAdd(t *testing.T) {
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	outputAddToInt64, err := engine.Exec(context.Background(), &pb.Struct{
 		StructType: pb.StructType_function,
 		FuncId:     "+",
@@ -86,7 +95,7 @@ func TestEq(t *testing.T) {
 			input1,
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), eq)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
@@ -139,7 +148,7 @@ func TestFunction(t *testing.T) {
 			isAge25,
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), and)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
@@ -162,7 +171,7 @@ func TestAnd(t *testing.T) {
 			},
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), and)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, false)
@@ -202,7 +211,7 @@ func TestOR(t *testing.T) {
 			},
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), or)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
@@ -221,7 +230,7 @@ func TestNot(t *testing.T) {
 			},
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), not)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, false)
@@ -255,7 +264,7 @@ func TestIf(t *testing.T) {
 			},
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), If)
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "高价值用户")
@@ -310,7 +319,7 @@ func TestCase(t *testing.T) {
 			},
 		},
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), Case)
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "低风险用户")
@@ -357,7 +366,7 @@ func TestBlock(t *testing.T) {
 				]
 			}`)
 	assert.Empty(t, err)
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.Exec(context.Background(), &pb.Struct{
 		StructType: pb.StructType_block,
 		Block:      "PayAndAge25",
@@ -414,7 +423,7 @@ func TestArgs(t *testing.T) {
 		StructType: pb.StructType_block,
 		Block:      "PayAndAge25",
 	}
-	engine := NewEngine(rfuncMap, rblockMap)
+	engine := NewEngine(rFuncMap, rBlockMap)
 	ctx := MergeToContext(context.Background(), map[string]*pb.Struct{
 		"uid": &pb.Struct{
 			StructType: pb.StructType_String,
@@ -429,7 +438,7 @@ func TestArgs(t *testing.T) {
 }
 
 func TestEngine_ExecParse(t *testing.T) {
-	engine := NewBaseEngine()
+	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
 			"func": "=",
@@ -443,6 +452,21 @@ func TestEngine_ExecParse(t *testing.T) {
 					]
 				},
 				{"double": 30}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}
+
+func TestIsType(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "isType",
+			"input": [
+				{"nil": true},
+				{"nil": true}
 			]
 		}`,
 	))
