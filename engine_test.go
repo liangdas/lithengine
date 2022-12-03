@@ -21,7 +21,7 @@ func init() {
 					return nil, errors.New("not input len  != 1")
 				}
 			}
-			if inputs[0].StructType != pb.StructType_String {
+			if inputs[0].StructType != pb.StructType_string {
 				return nil, errors.New(fmt.Sprintf("%v not string", inputs[0].StructType.String()))
 			}
 			userId := inputs[0].String_
@@ -39,7 +39,7 @@ func init() {
 		"userRiskLevel": func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
 			return []*pb.Struct{
 				&pb.Struct{
-					StructType: pb.StructType_Int64,
+					StructType: pb.StructType_int64,
 					Int64:      2,
 				},
 			}, nil
@@ -55,7 +55,7 @@ func TestAdd(t *testing.T) {
 		FuncId:     "+",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      10,
 			},
 			&pb.Struct{
@@ -74,7 +74,7 @@ func TestEq(t *testing.T) {
 		FuncId:     "+",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      10,
 			},
 			&pb.Struct{
@@ -108,7 +108,7 @@ func TestFunction(t *testing.T) {
 		Name:       "是否充值",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "111",
 			},
 		},
@@ -118,7 +118,7 @@ func TestFunction(t *testing.T) {
 		FuncId:     "+",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      10,
 			},
 			&pb.Struct{
@@ -234,7 +234,20 @@ func TestNot(t *testing.T) {
 	output, err := engine.Exec(context.Background(), not)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, false)
-	fmt.Println("---not test ", output)
+
+	not = &pb.Struct{
+		StructType: pb.StructType_function,
+		FuncId:     "not",
+		FuncInput: []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_bool,
+				Bool:       false,
+			},
+		},
+	}
+	output, err = engine.Exec(context.Background(), not)
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
 }
 
 func TestIf(t *testing.T) {
@@ -244,7 +257,7 @@ func TestIf(t *testing.T) {
 		Name:       "是否充值",
 		FuncInput: []*pb.Struct{
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "111",
 			},
 		},
@@ -255,11 +268,11 @@ func TestIf(t *testing.T) {
 		FuncInput: []*pb.Struct{
 			isPay,
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "高价值用户",
 			},
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "低价值用户",
 			},
 		},
@@ -284,37 +297,37 @@ func TestCase(t *testing.T) {
 				Name:       "用户风险等级",
 				FuncInput: []*pb.Struct{
 					&pb.Struct{
-						StructType: pb.StructType_String,
+						StructType: pb.StructType_string,
 						String_:    "10001",
 					},
 				},
 			},
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "正常用户",
 			},
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      1,
 			},
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "高风险用户",
 			},
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      2,
 			},
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "低风险用户",
 			},
 			&pb.Struct{
-				StructType: pb.StructType_Int64,
+				StructType: pb.StructType_int64,
 				Int64:      3,
 			},
 			&pb.Struct{
-				StructType: pb.StructType_String,
+				StructType: pb.StructType_string,
 				String_:    "正常用户",
 			},
 		},
@@ -426,7 +439,7 @@ func TestArgs(t *testing.T) {
 	engine := NewEngine(rFuncMap, rBlockMap)
 	ctx := MergeToContext(context.Background(), map[string]*pb.Struct{
 		"uid": &pb.Struct{
-			StructType: pb.StructType_String,
+			StructType: pb.StructType_string,
 			String_:    "111",
 		},
 	})
@@ -467,6 +480,82 @@ func TestIsType(t *testing.T) {
 			"input": [
 				{"nil": true},
 				{"nil": true}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}
+
+func TestIn(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "in",
+			"input": [
+				{"string": "a"},
+				{"string": "a"},
+				{"string": "b"},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "in",
+			"input": [
+				{"string": "a"},
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, false)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "in",
+			"input": [
+				{"string": "a"},
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"},
+				{"list": [{"string": "a"},{"string": "d"},{"int64": 3}]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "in",
+			"input": [
+				{"int64": 3},
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"},
+				{"list": [{"string": "a"},{"string": "d"},{"int64": 3}]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "in",
+			"input": [
+				{"bool": false},
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"},
+				{"list": [{"string": "a"},{"bool": false},{"int64": 3}]}
 			]
 		}`,
 	))

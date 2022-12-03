@@ -5,14 +5,16 @@ option go_package = "github.com/liangdas/lithengine/lithengine";
 
 // 结构体类型，函数，代码块也被认为是一个特殊的结构体
 enum StructType {
-    Int64 = 0;
-    String = 1;
+    int64 = 0;
+    string = 1;
     double=2;
     bool=3;
     nil=4;
-    function=5; //函数，会在【传参前先执行】得到结果
-    closure=6;//闭包函数，会作为子针参数传递【传参前不执行】
-    block=7;//代码块，本质是一系列函数逻辑组合 使用者可以定义一些通用的代码块方便后续复用
+    list=5;
+    hash=6;
+    function=7; //函数，会在【传参前先执行】得到结果
+    closure=8;//闭包函数，会作为子针参数传递【传参前不执行】
+    block=9;//代码块，本质是一系列函数逻辑组合 使用者可以定义一些通用的代码块方便后续复用
 }
 
 // 结构体定义
@@ -24,7 +26,9 @@ message Struct {
   double double=4;
   bool bool =5;
   bool nil=6;
-  string block=7;
+  repeated Struct list=7;
+  map<string,Struct> hash=8;
+  string block=9;
   // @inject_tag: json:"func,omitempty"
   string funcId=10;  //函数ID
   // @inject_tag: json:"closure,omitempty"
