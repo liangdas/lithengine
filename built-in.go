@@ -48,7 +48,15 @@ func init() {
 }
 
 func Args(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
-	name := inputs[0].String_
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	if a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+	}
+	name := a.String_
 	m, ok := FromContext(context)
 	if !ok {
 		return nil, errors.New("no args")
