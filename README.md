@@ -27,16 +27,45 @@ output, err := engine.ExecParse(context.Background(), []byte(
 ```
 更多示例请见 engine_test.go 
 #支持数据类型
-+ nil
-+ string
-+ int64
++ nil    
+  + {"nil":true}
++ string 
+  + {"string":"string"}
++ int64  
+  + {"int64":666}
 + double
+  + {"double":6.6}
 + bool
+  + {"bool":true}
 + list
+  + {"list":[{"string":"string"},{"int64":666}]}
 + hash
+  + {"hash":{"a":{"string":"string"},"b":{"int64":666}}}
 + 函数
+  + {
+    "func": "in",
+    "input": [。。。]
+    }
 + 闭包函数
+  + {
+    "closure": "in",
+    "input": [。。。]
+    }
 + 代码块
 # 支持特性
-+ 内置支持加，减，乘，除，=，>,<,>=,<=,&&,||,not,if,case,int64(浮点数转int64),args(获取传参),in(包含检查),getHash,isType(类型判断)
++ 内置支持
+  + 加，
+  + 减，
+  + 乘，
+  + 除，
+  + =，
+  + \>,<,>=,<=,&&,||,
+  + not,
+  + if,
+  + case,
+  + int64(浮点数转int64),
+  + args(获取传参),
+  + in(包含检查),
+  + getHash,
+  + isType(类型判断)
 + 支持添加自定义函数

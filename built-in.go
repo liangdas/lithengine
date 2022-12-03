@@ -726,7 +726,7 @@ func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 }
 
 func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
-	if len(inputs) != 1 {
+	if len(inputs) != 2 {
 		return nil, errors.New("gethash input len  != 2")
 	}
 
@@ -735,7 +735,7 @@ func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Str
 		return nil, err
 	}
 
-	b, err := e.Exec(context, inputs[2])
+	b, err := e.Exec(context, inputs[1])
 	if err != nil {
 		return nil, err
 	}
@@ -747,10 +747,10 @@ func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Str
 	if b.StructType != pb.StructType_string {
 		return nil, errors.New(fmt.Sprintf("%v not string", a.StructType.String()))
 	}
-	if b.Hash == nil {
+	if a.Hash == nil {
 		return nil, errors.New("hash is nil")
 	}
-	if v, ok := b.Hash[b.String_]; ok {
+	if v, ok := a.Hash[b.String_]; ok {
 		return []*pb.Struct{v}, nil
 	}
 	return []*pb.Struct{&pb.Struct{

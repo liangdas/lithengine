@@ -562,3 +562,19 @@ func TestIn(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
 }
+
+// TestArgs 环境变量和变量传递示例
+func TestGetHash(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "getHash",
+			"input": [
+				{"hash": {"a":{"string": "good"},"b":{"string": "b"}}},
+				{"string": "a"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "good")
+}
