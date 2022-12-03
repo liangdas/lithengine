@@ -38,5 +38,5 @@ output, err := engine.ExecParse(context.Background(), []byte(
 + 闭包函数
 + 代码块
 # 支持特性
-+ 内置支持加，减，乘，除，=，>,<,>=,<=,&&,||,not,if,case,int64(浮点数转int64),args(获取传参)
++ 内置支持加，减，乘，除，=，>,<,>=,<=,&&,||,not,if,case,int64(浮点数转int64),args(获取传参),in(包含检查),getHash,isType(类型判断)
 + 支持添加自定义函数
