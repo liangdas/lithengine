@@ -46,7 +46,11 @@ output, err := engine.ExecParse(context.Background(), []byte(
     "func": "in",
     "input": [。。。]
     }
-+ 闭包函数
++ 延迟函数
+  + 会作为参数传递给执行函数，由执行函数选择性执行
+    + 优点：执行函数可以根据实际情况选择最优的延迟函数执行时机，提升性能
+    + 缺点：需要执行函数编写逻辑去支持执行延迟函数
+    + <strong>延迟函数跟普通函数没有任何区别，仅仅是执行时机不同而已</strong>
   + {
     "closure": "in",
     "input": [。。。]
