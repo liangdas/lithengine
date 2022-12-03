@@ -102,7 +102,6 @@ func (e *Engine) LoadBlock(id string) (*pb.Struct, bool) {
 }
 
 func (e *Engine) BaseFunctionOne2One(context context.Context, function Function, input *pb.Struct) (*pb.Struct, error) {
-	input.GetFuncId()
 	if input.StructType == pb.StructType_function {
 		o, err := e.FunctionOne(context, input)
 		if err != nil {
@@ -191,8 +190,8 @@ func (e *Engine) FunctionOne(context context.Context, function *pb.Struct) (*pb.
 	if function.StructType != pb.StructType_function && function.StructType != pb.StructType_closure {
 		return nil, errors.New(fmt.Sprintf("%v Cannot execute", function.StructType.String()))
 	}
-	if f, ok := e.LoadFunc(function.GetFuncId()); !ok {
-		return nil, errors.New(fmt.Sprintf("%v nofind", function.GetFuncId()))
+	if f, ok := e.LoadFunc(function.Func()); !ok {
+		return nil, errors.New(fmt.Sprintf("%v nofind", function.Func()))
 	} else {
 		if function.Args != nil {
 			context = MergeToContext(context, function.Args)
@@ -209,8 +208,8 @@ func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*
 	if function.StructType != pb.StructType_function && function.StructType != pb.StructType_closure {
 		return nil, errors.New(fmt.Sprintf("%v Cannot execute", function.StructType.String()))
 	}
-	if f, ok := e.LoadFunc(function.GetFuncId()); !ok {
-		return nil, errors.New(fmt.Sprintf("func nofind: %v", function.GetFuncId()))
+	if f, ok := e.LoadFunc(function.Func()); !ok {
+		return nil, errors.New(fmt.Sprintf("func nofind: %v", function.Func()))
 	} else {
 		if function.Args != nil {
 			context = MergeToContext(context, function.Args)

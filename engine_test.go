@@ -21,10 +21,14 @@ func init() {
 					return nil, errors.New("not input len  != 1")
 				}
 			}
-			if inputs[0].StructType != pb.StructType_string {
+			a, err := e.Exec(context, inputs[0])
+			if err != nil {
+				return nil, err
+			}
+			if a.StructType != pb.StructType_string {
 				return nil, errors.New(fmt.Sprintf("%v not string", inputs[0].StructType.String()))
 			}
-			userId := inputs[0].String_
+			userId := a.String_
 			isPay := false
 			if userId == "111" {
 				isPay = true
@@ -577,4 +581,65 @@ func TestGetHash(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "good")
+}
+
+// TestArgs 环境变量和变量传递示例
+func TestClosure(t *testing.T) {
+	//	//block
+	err := RegisterBlockFromJson("PayAndAge25",
+		`{
+				"closure": "&&",
+				"input": [
+					{
+						"closure": "isPay",
+						"name": "是否充值",
+						"input": [
+							{
+								"closure": "args",
+								"input": [
+									{
+										"string": "uid"
+									}
+								]
+							}
+						]
+					},
+					{
+						"closure": "=",
+						"input": [
+							{
+								"closure": "+",
+								"input": [
+									{
+										"int64": 10
+									},
+									{
+										"double": 15
+									}
+								]
+							},
+							{
+								"double": 25
+							}
+						]
+					}
+				]
+			}`)
+	assert.Empty(t, err)
+	args := &pb.Struct{
+		StructType: pb.StructType_block,
+		Block:      "PayAndAge25",
+	}
+	engine := NewEngine(rFuncMap, rBlockMap)
+	ctx := MergeToContext(context.Background(), map[string]*pb.Struct{
+		"uid": &pb.Struct{
+			StructType: pb.StructType_string,
+			String_:    "111",
+		},
+	})
+	output, err := engine.Exec(ctx, args)
+	assert.Empty(t, err)
+	fmt.Println("---args test ", output)
+	b, _ := json.MarshalIndent(args, "", "    ")
+	fmt.Println(string(b))
 }

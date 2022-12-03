@@ -2,6 +2,16 @@ package lithengine
 
 import "encoding/json"
 
+func (s *Struct) Func() string {
+	switch s.StructType {
+	case StructType_closure:
+		return s.ClosureId
+	case StructType_function:
+		return s.FuncId
+	}
+	return ""
+}
+
 func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
