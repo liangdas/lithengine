@@ -32,6 +32,8 @@ output, err := engine.ExecParse(context.Background(), []byte(
 + int64
 + double
 + bool
++ list
++ hash
 + 函数
 + 闭包函数
 + 代码块

@@ -42,6 +42,7 @@ func init() {
 		"args":     Args,
 		"isType":   IsType,
 		"in":       In,
+		"getHash":  GetHash,
 	}
 	_blockMap = map[string]*pb.Struct{}
 }
@@ -722,4 +723,37 @@ func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 		return nil, err
 	}
 	return []*pb.Struct{df}, nil
+}
+
+func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) != 1 {
+		return nil, errors.New("gethash input len  != 2")
+	}
+
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := e.Exec(context, inputs[2])
+	if err != nil {
+		return nil, err
+	}
+
+	if a.StructType != pb.StructType_hash {
+		return nil, errors.New(fmt.Sprintf("%v not hash", a.StructType.String()))
+	}
+
+	if b.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not string", a.StructType.String()))
+	}
+	if b.Hash == nil {
+		return nil, errors.New("hash is nil")
+	}
+	if v, ok := b.Hash[b.String_]; ok {
+		return []*pb.Struct{v}, nil
+	}
+	return []*pb.Struct{&pb.Struct{
+		StructType: pb.StructType_nil,
+	}}, nil
 }
