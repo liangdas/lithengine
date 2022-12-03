@@ -140,6 +140,19 @@ func (e *Engine) BaseFunctionMore2One(context context.Context, function Function
 	return output[0], nil
 }
 
+func (e *Engine) BaseFunctionMore(context context.Context, function Function, input []*pb.Struct) ([]*pb.Struct, error) {
+	for i, in := range input {
+		if in.StructType == pb.StructType_function {
+			o, err := e.FunctionOne(context, in)
+			if err != nil {
+				return nil, err
+			}
+			input[i] = o
+		}
+	}
+	return function(context, e, input)
+}
+
 func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error) {
 	st, err := ParseJson(s)
 	if err != nil {
@@ -202,11 +215,7 @@ func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*
 		if function.Args != nil {
 			context = MergeToContext(context, function.Args)
 		}
-		output, err := f(context, e, function.GetFuncInput())
-		if err != nil {
-			return nil, err
-		}
-		return output, nil
+		return e.BaseFunctionMore(context, f, function.GetFuncInput())
 	}
 }
 
