@@ -583,7 +583,7 @@ func TestGetHash(t *testing.T) {
 	assert.Equal(t, output.String_, "good")
 }
 
-// TestArgs 环境变量和变量传递示例
+// TestClosure 闭包函数测试
 func TestClosure(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
