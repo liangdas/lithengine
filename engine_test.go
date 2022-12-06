@@ -787,4 +787,29 @@ func TestChain(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "b")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "chain",
+			"input": [
+				{
+					"func":"if",
+					"input":[
+						{"bool": false},
+						{"return": [{"string": "a"}]}
+					]
+				},
+				{
+					"func":"if",
+					"input":[
+						{"bool": false},
+						{"return": [{"string": "b"}]}
+					]
+				},
+				{"return": [{"string": "c"}]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "c")
 }
