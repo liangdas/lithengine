@@ -42,6 +42,7 @@ func init() {
 		"args":     Args,
 		"isType":   IsType,
 		"in":       In,
+		"chain":    Chain,
 		"getHash":  GetHash,
 	}
 	_blockMap = map[string]*pb.Struct{}
@@ -623,8 +624,8 @@ func In(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 
 // If (test-clause) (action<sub>1</sub>) (action<sub>2</sub>)
 func If(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
-	if len(inputs) != 3 {
-		return nil, errors.New("if input len  != 3")
+	if len(inputs) < 2 {
+		return nil, errors.New("if input len  < 2")
 	}
 	a, err := e.Exec(context, inputs[0])
 	if err != nil {
@@ -642,11 +643,16 @@ func If(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 		}
 		return []*pb.Struct{b}, nil
 	}
-	b, err := e.Exec(context, inputs[2])
-	if err != nil {
-		return nil, err
+	if len(inputs) > 2 {
+		b, err := e.Exec(context, inputs[2])
+		if err != nil {
+			return nil, err
+		}
+		return []*pb.Struct{b}, nil
 	}
-	return []*pb.Struct{b}, nil
+	return []*pb.Struct{&pb.Struct{
+		StructType: pb.StructType_nil,
+	}}, nil
 }
 
 func oddNumber(n int) bool {
@@ -656,14 +662,11 @@ func oddNumber(n int) bool {
 	return oddNumber(n - 2)
 }
 
-// Case keyform default key1 action1  key2 action2 ...
+// Case keyform key1 action1  key2 action2 ...
 //(case day Sunday 1 Monday 2 Tuesday 3 Wednesday 4 Thursday 5 Friday 6 Saturday 7 Sunday
 func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
-	if oddNumber(len(inputs)) {
-		return nil, errors.New("case input must be odd number")
-	}
-	if len(inputs) < 2 {
-		return nil, errors.New("case input len  < 2")
+	if len(inputs) < 1 {
+		return nil, errors.New("case input len  < 1")
 	}
 	a, err := e.Exec(context, inputs[0])
 	if err != nil {
@@ -683,12 +686,23 @@ func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 		return nil, errors.New(fmt.Sprintf("case keyform %v must be int64 or string or bool or double", a.StructType.String()))
 	}
 
-	keys := (len(inputs) - 2) / 2
+	keys := len(inputs) - 1
 
 	for i := 1; i <= keys; i++ {
+		kv := inputs[i]
+		kvv, err := e.Exec(context, kv)
+		if err != nil {
+			return nil, err
+		}
+		if kvv.StructType != pb.StructType_list {
+			return nil, errors.New(fmt.Sprintf("case %v must be {'list':[key action]}}", kvv.StructType.String()))
+		}
+		if len(kvv.GetList()) < 2 {
+			return nil, errors.New(fmt.Sprintf("case kv len=%v must be {'list':[key action]}}", len(kvv.GetList())))
+		}
 		//每次for循环应该步进2
-		k := inputs[i+(i)]
-		v := inputs[i+(i)+1]
+		k := kvv.List[0]
+		v := kvv.List[1]
 		ka, err := e.Exec(context, k)
 		if err != nil {
 			return nil, err
@@ -726,11 +740,25 @@ func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 		}
 		return []*pb.Struct{va}, nil
 	}
-	df, err := e.Exec(context, inputs[1])
-	if err != nil {
-		return nil, err
+	return []*pb.Struct{&pb.Struct{
+		StructType: pb.StructType_nil,
+	}}, nil
+}
+
+// Chain action1 action2 action3 顺序执行表达式，如果其中一个表达式结果为Return类型则直接返回Return的结果不再继续执行后续表达式，如果所有表达式均无return则最终返回nil
+func Chain(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	for _, input := range inputs {
+		kvv, err := e.Exec(context, input)
+		if err != nil {
+			return nil, err
+		}
+		if kvv.StructType == pb.StructType_return {
+			return kvv.Return, nil
+		}
 	}
-	return []*pb.Struct{df}, nil
+	return []*pb.Struct{&pb.Struct{
+		StructType: pb.StructType_nil,
+	}}, nil
 }
 
 func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {

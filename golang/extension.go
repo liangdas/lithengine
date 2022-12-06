@@ -114,6 +114,18 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 			hasType = true
 		}
 	}
+	if i, ok := m["return"]; ok {
+		inputs := i.([]interface{})
+		s.Return = []*Struct{}
+		for _, ip := range inputs {
+			o := new(Struct)
+			s.Return = append(s.Return, MapToStruct(o, ip.(map[string]interface{})))
+		}
+		if !hasType {
+			s.StructType = StructType_return
+			hasType = true
+		}
+	}
 	if i, ok := m["input"]; ok {
 		inputs := i.([]interface{})
 		s.FuncInput = []*Struct{}
@@ -130,5 +142,6 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 			s.Args[k] = MapToStruct(o, ip.(map[string]interface{}))
 		}
 	}
+
 	return s
 }

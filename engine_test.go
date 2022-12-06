@@ -285,9 +285,28 @@ func TestIf(t *testing.T) {
 	output, err := engine.Exec(context.Background(), If)
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "高价值用户")
-	fmt.Println("---if test ", output)
-	b, _ := json.MarshalIndent(If, "", "    ")
-	fmt.Println("---if json = ", string(b))
+
+	If = &pb.Struct{
+		StructType: pb.StructType_function,
+		FuncId:     "if",
+		FuncInput: []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_function,
+				FuncId:     "not",
+				FuncInput: []*pb.Struct{
+					isPay,
+				},
+			},
+			&pb.Struct{
+				StructType: pb.StructType_string,
+				String_:    "高价值用户",
+			},
+		},
+	}
+	engine = NewEngine(rFuncMap, rBlockMap)
+	output, err = engine.Exec(context.Background(), If)
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_nil)
 }
 
 func TestCase(t *testing.T) {
@@ -307,32 +326,43 @@ func TestCase(t *testing.T) {
 				},
 			},
 			&pb.Struct{
-				StructType: pb.StructType_string,
-				String_:    "正常用户",
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      1,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "高风险用户",
+					},
+				},
 			},
 			&pb.Struct{
-				StructType: pb.StructType_int64,
-				Int64:      1,
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      2,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "低风险用户",
+					},
+				},
 			},
 			&pb.Struct{
-				StructType: pb.StructType_string,
-				String_:    "高风险用户",
-			},
-			&pb.Struct{
-				StructType: pb.StructType_int64,
-				Int64:      2,
-			},
-			&pb.Struct{
-				StructType: pb.StructType_string,
-				String_:    "低风险用户",
-			},
-			&pb.Struct{
-				StructType: pb.StructType_int64,
-				Int64:      3,
-			},
-			&pb.Struct{
-				StructType: pb.StructType_string,
-				String_:    "正常用户",
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      3,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "正常用户",
+					},
+				},
 			},
 		},
 	}
@@ -340,9 +370,60 @@ func TestCase(t *testing.T) {
 	output, err := engine.Exec(context.Background(), Case)
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "低风险用户")
-	fmt.Println("---case test ", output)
-	b, _ := json.MarshalIndent(Case, "", "    ")
-	fmt.Println("---case json = ", string(b))
+
+	Case = &pb.Struct{
+		StructType: pb.StructType_function,
+		FuncId:     "case",
+		FuncInput: []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_int64,
+				Int64:      4,
+			},
+			&pb.Struct{
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      1,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "高风险用户",
+					},
+				},
+			},
+			&pb.Struct{
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      2,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "低风险用户",
+					},
+				},
+			},
+			&pb.Struct{
+				StructType: pb.StructType_list,
+				List: []*pb.Struct{
+					&pb.Struct{
+						StructType: pb.StructType_int64,
+						Int64:      3,
+					},
+					&pb.Struct{
+						StructType: pb.StructType_string,
+						String_:    "正常用户",
+					},
+				},
+			},
+		},
+	}
+	engine = NewEngine(rFuncMap, rBlockMap)
+	output, err = engine.Exec(context.Background(), Case)
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_nil)
 }
 
 // TestBlock 代码块注册和使用
@@ -642,4 +723,68 @@ func TestClosure(t *testing.T) {
 	fmt.Println("---args test ", output)
 	b, _ := json.MarshalIndent(args, "", "    ")
 	fmt.Println(string(b))
+}
+
+// TestChain 顺序执行器
+func TestChain(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "chain",
+			"input": [
+				{"string": "a"},
+				{"string": "a"},
+				{"string": "b"},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_nil)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "chain",
+			"input": [
+				{
+					"func":"if",
+					"input":[
+						{"bool": true},
+						{"return": [{"string": "a"}]}
+					]
+				},
+				{"string": "a"},
+				{"string": "b"},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "chain",
+			"input": [
+				{"string": "a"},
+				{"return": [{"string": "b"}]},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "b")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "chain",
+			"input": [
+				{"string": "a"},
+				{"return": [{"string": "b"}]},
+				{"return": [{"string": "c"}]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "b")
 }
