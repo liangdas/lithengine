@@ -511,6 +511,17 @@ func TestArgs(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(ctx, []byte(
+		`{"getArgs":[{"string":"appid"}]}`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(ctx, []byte(
+		`{"getArgs":[{"string":"appid"},{"string":"9999"}]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "9999")
 }
 
 func TestEngine_ExecParse(t *testing.T) {
@@ -634,6 +645,28 @@ func TestGetHash(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "good")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"getHash": [
+				{"hash": {"a":{"string": "good"},"b":{"string": "b"}}},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"getHash": [
+				{"hash": {"a":{"string": "good"},"b":{"string": "b"}}},
+				{"string": "c"},
+				{"string": "c"}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "c")
 }
 
 // TestClosure 闭包函数测试
@@ -724,7 +757,7 @@ func TestChain(t *testing.T) {
 					"func":"if",
 					"input":[
 						{"bool": true},
-						{"return": [{"string": "a"}]}
+						{"return": {"string": "a"}}
 					]
 				},
 				{"string": "a"},
@@ -754,8 +787,8 @@ func TestChain(t *testing.T) {
 			"func": "chain",
 			"input": [
 				{"string": "a"},
-				{"return": [{"string": "b"}]},
-				{"return": [{"string": "c"}]}
+				{"return": {"string": "b"}},
+				{"return": {"string": "c"}}
 			]
 		}`,
 	))
@@ -770,22 +803,69 @@ func TestChain(t *testing.T) {
 					"func":"if",
 					"input":[
 						{"bool": false},
-						{"return": [{"string": "a"}]}
+						{"return": {"string": "a"}}
 					]
 				},
 				{
 					"func":"if",
 					"input":[
 						{"bool": false},
-						{"return": [{"string": "b"}]}
+						{"return": {"string": "b"}}
 					]
 				},
-				{"return": [{"string": "c"}]}
+				{"return": {"string": "c"}}
 			]
 		}`,
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "c")
+}
+
+// TestExec 函数执行器
+func TestExec(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"exec": {"string": "a"}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"exec": {"+":[{"double": 6},{"double": 4}]}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 10.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"set": [{"string": "exec"},{"set":[{"string":"a"},{"string":"aa"}]}]},
+				{"exec": {"get":{"string":"exec"}}},
+				{"return":{"get":{"string":"a"}}}
+			],
+			"let":{"exec":{"nil":true},"a":{"nil":true}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "aa")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"set": [{"string": "exec"},{"set":[{"string":"a"},{"string":"aa"}]}]},
+				{"return":{"get":{"string":"a"}}},
+				{"exec": {"get":{"string":"exec"}}},
+				{"return":{"get":{"string":"a"}}}
+			],
+			"let":{"exec":{"nil":true},"a":{"nil":true}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_nil)
 }
 
 func TestPointer(t *testing.T) {
@@ -808,12 +888,171 @@ func TestFunc(t *testing.T) {
 	assert.Equal(t, output.Double, 4.0)
 
 	output, err = engine.ExecParse(context.Background(), []byte(
-		`{"+": {"int64":2}}`,
+		`{"+": {"double":2}}`,
 	))
-	assert.NotEmpty(t, err)
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 2.0)
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{"jkf": [{"int64":2},{"int64":2}]}`,
 	))
 	assert.NotEmpty(t, err)
+}
+
+func TestSet(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"set": [{"string": "a"},{"string": "b"}]},
+				{"return": {"get": {"string": "a"}}}
+			],
+			"let":{"a":{"nil":true}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "b")
+}
+
+func TestGet(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": {"get": {"string": "a"}}}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": {"get": {"string": "b"}}}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": {"get": [{"string": "b"},{"string": "a"}]}}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": [
+					{
+						"chain": [
+							{"return": {"get": {"string": "a"}}}
+						]
+					}
+				]}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": [
+					{
+						"chain": [
+							{"return": {"get": {"string": "a"}}}
+						],
+						"let":{"a":{"string":"b"}}
+					}
+				]}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "b")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"return": [
+					{
+						"chain": [
+							{"set": [{"string": "a"},{"string": "c"}]},
+							{"return": {"get": {"string": "a"}}}
+						],
+						"let":{"a":{"string":"b"}}
+					}
+				]}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "c")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{
+					"chain": [
+						{"set": [{"string": "a"},{"string": "c"}]}
+					],
+					"let":{"a":{"string":"b"}}
+				},
+				{"return": [
+					{
+						"chain": [
+							{"return": {"get": {"string": "a"}}}
+						]
+					}
+				]}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{"if":[
+					{
+						"=":[
+								{
+									"chain": [
+										{"return": {"get": {"string": "a"}}}
+									],
+									"let":{"a":{"string":"b"}}
+								},
+								{"string":"b"}
+						]
+					},
+					{"set": [{"string": "a"},{"string": "setToc"}]}
+				]},
+				{"return": [
+					{
+						"chain": [
+							{"return": {"get": {"string": "a"}}}
+						]
+					}
+				]}
+			],
+			"let":{"a":{"string":"a"}}
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "setToc")
 }

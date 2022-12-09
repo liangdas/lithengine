@@ -44,64 +44,111 @@ var ReservedFields = []string{
 	"input",
 	"args",
 	"closure",
+	"let",
 }
 
 func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 	hasType := false
-	if st, ok := m["type"]; ok {
-		s.StructType = StructType(int32(st.(float64)))
+	if i, ok := m["type"]; ok {
+		inputs, ok := i.(float64)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`type %T not int`, i))
+		}
+		s.StructType = StructType(int32(inputs))
 		hasType = true
 	}
 	if i, ok := m["int64"]; ok {
-		s.Int64 = int64(i.(float64))
+		inputs, ok := i.(float64)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`int64 %T not int64`, i))
+		}
+		s.Int64 = int64(inputs)
 		if !hasType {
 			s.StructType = StructType_int64
 			hasType = true
 		}
 	}
 	if i, ok := m["string"]; ok {
-		s.String_ = i.(string)
+		inputs, ok := i.(string)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`string %T not string`, i))
+		}
+		s.String_ = inputs
 		if !hasType {
 			s.StructType = StructType_string
 			hasType = true
 		}
 	}
 	if i, ok := m["double"]; ok {
-		s.Double = i.(float64)
+		inputs, ok := i.(float64)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`double %T not float64`, i))
+		}
+		s.Double = inputs
 		if !hasType {
 			s.StructType = StructType_double
 			hasType = true
 		}
 	}
 	if i, ok := m["bool"]; ok {
-		s.Bool = i.(bool)
+		inputs, ok := i.(bool)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`bool %T not bool`, i))
+		}
+		s.Bool = inputs
 		if !hasType {
 			s.StructType = StructType_bool
 			hasType = true
 		}
 	}
+	if i, ok := m["closure"]; ok {
+		inputs, ok := i.(bool)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`closure %T not bool`, i))
+		}
+		s.Closure = inputs
+	}
 	if i, ok := m["nil"]; ok {
-		s.Bool = i.(bool)
+		inputs, ok := i.(bool)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`nil %T not bool`, i))
+		}
+		s.Bool = inputs
 		if !hasType {
 			s.StructType = StructType_nil
 			hasType = true
 		}
 	}
 	if i, ok := m["func"]; ok {
-		s.FuncId = i.(string)
+		inputs, ok := i.(string)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`func %T not string`, i))
+		}
+		s.FuncId = inputs
 		if !hasType {
 			s.StructType = StructType_function
 			hasType = true
 		}
 	}
 	if i, ok := m["name"]; ok {
-		s.Name = i.(string)
+		inputs, ok := i.(string)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`name %T not string`, i))
+		}
+		s.Name = inputs
 	}
 	if i, ok := m["schema"]; ok {
-		s.Schema = i.(string)
+		inputs, ok := i.(string)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`schema %T not string`, i))
+		}
+		s.Schema = inputs
 	}
 	if i, ok := m["list"]; ok {
-		inputs := i.([]interface{})
+		inputs, ok := i.([]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`list %T not []interface{}`, i))
+		}
 		s.List = []*Struct{}
 		for _, ip := range inputs {
 			o := new(Struct)
@@ -117,7 +164,10 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 		}
 	}
 	if i, ok := m["hash"]; ok {
-		inputs := i.(map[string]interface{})
+		inputs, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`hash %T not map[string]interface{}`, i))
+		}
 		s.Hash = map[string]*Struct{}
 		for k, ip := range inputs {
 			o := new(Struct)
@@ -133,8 +183,12 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 		}
 	}
 	if i, ok := m["pointer"]; ok {
+		inputs, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`pointer %T not map[string]interface{}`, i))
+		}
 		o := new(Struct)
-		ms, err := MapToStruct(o, i.(map[string]interface{}))
+		ms, err := MapToStruct(o, inputs)
 		if err != nil {
 			return nil, err
 		}
@@ -145,15 +199,26 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 		}
 	}
 	if i, ok := m["return"]; ok {
-		inputs := i.([]interface{})
-		s.Return = []*Struct{}
-		for _, ip := range inputs {
+		if inputs, ok := i.([]interface{}); ok {
+			s.Return = []*Struct{}
+			for _, ip := range inputs {
+				o := new(Struct)
+				ms, err := MapToStruct(o, ip.(map[string]interface{}))
+				if err != nil {
+					return nil, err
+				}
+				s.Return = append(s.Return, ms)
+			}
+		} else if inputs, ok := i.(map[string]interface{}); ok {
+			s.Return = []*Struct{}
 			o := new(Struct)
-			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			ms, err := MapToStruct(o, inputs)
 			if err != nil {
 				return nil, err
 			}
 			s.Return = append(s.Return, ms)
+		} else {
+			return nil, errors.New(fmt.Sprintf(`return must be an array or map, eg {"return":[...]} or {"return":{...}}`))
 		}
 		if !hasType {
 			s.StructType = StructType_return
@@ -161,19 +226,33 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 		}
 	}
 	if i, ok := m["input"]; ok {
-		inputs := i.([]interface{})
-		s.FuncInput = []*Struct{}
-		for _, ip := range inputs {
+		if inputs, ok := i.([]interface{}); ok {
+			s.FuncInput = []*Struct{}
+			for _, ip := range inputs {
+				o := new(Struct)
+				ms, err := MapToStruct(o, ip.(map[string]interface{}))
+				if err != nil {
+					return nil, err
+				}
+				s.FuncInput = append(s.FuncInput, ms)
+			}
+		} else if inputs, ok := i.(map[string]interface{}); ok {
+			s.FuncInput = []*Struct{}
 			o := new(Struct)
-			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			ms, err := MapToStruct(o, inputs)
 			if err != nil {
 				return nil, err
 			}
 			s.FuncInput = append(s.FuncInput, ms)
+		} else {
+			return nil, errors.New(fmt.Sprintf(`input must be an array or map, eg {"input":[...]} or {"input":{...}}`))
 		}
 	}
 	if i, ok := m["args"]; ok {
-		inputs := i.(map[string]interface{})
+		inputs, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`args %T not map[string]interface{}`, i))
+		}
 		s.Args = map[string]*Struct{}
 		for k, ip := range inputs {
 			o := new(Struct)
@@ -182,6 +261,21 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 				return nil, err
 			}
 			s.Args[k] = ms
+		}
+	}
+	if i, ok := m["let"]; ok {
+		inputs, ok := i.(map[string]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`let %T not map[string]interface{}`, i))
+		}
+		s.Let = map[string]*Struct{}
+		for k, ip := range inputs {
+			o := new(Struct)
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.Let[k] = ms
 		}
 	}
 
@@ -213,8 +307,16 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 					}
 					s.FuncInput = append(s.FuncInput, ms)
 				}
+			} else if inputs, ok := i.(map[string]interface{}); ok {
+				s.FuncInput = []*Struct{}
+				o := new(Struct)
+				ms, err := MapToStruct(o, inputs)
+				if err != nil {
+					return nil, err
+				}
+				s.FuncInput = append(s.FuncInput, ms)
 			} else {
-				return nil, errors.New(fmt.Sprintf(`The value of the "%v" field must be an array, eg {"%v":[...]}`, k, k))
+				return nil, errors.New(fmt.Sprintf(`The value of the "%v" field must be an array or map, eg {"%v":[...]} or {"%v":{...}}`, k, k, k))
 			}
 		}
 	}

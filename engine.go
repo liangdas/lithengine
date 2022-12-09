@@ -102,13 +102,13 @@ func (e *Engine) LoadBlock(id string) (*pb.Struct, bool) {
 }
 
 func (e *Engine) BaseFunctionOne2One(context context.Context, function Function, input *pb.Struct) (*pb.Struct, error) {
-	if input.StructType == pb.StructType_function && !input.Closure {
-		o, err := e.FunctionOne(context, input)
-		if err != nil {
-			return nil, err
-		}
-		input = o
-	}
+	//if input.StructType == pb.StructType_function && !input.Closure {
+	//	o, err := e.FunctionOne(context, input)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	input = o
+	//}
 	output, err := function(context, e, []*pb.Struct{input})
 	if err != nil {
 		return nil, err
@@ -120,15 +120,15 @@ func (e *Engine) BaseFunctionOne2One(context context.Context, function Function,
 }
 
 func (e *Engine) BaseFunctionMore2One(context context.Context, function Function, input []*pb.Struct) (*pb.Struct, error) {
-	for i, in := range input {
-		if in.StructType == pb.StructType_function && !in.Closure {
-			o, err := e.FunctionOne(context, in)
-			if err != nil {
-				return nil, err
-			}
-			input[i] = o
-		}
-	}
+	//for i, in := range input {
+	//	if in.StructType == pb.StructType_function && !in.Closure {
+	//		o, err := e.FunctionOne(context, in)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		input[i] = o
+	//	}
+	//}
 	output, err := function(context, e, input)
 	if err != nil {
 		return nil, err
@@ -140,15 +140,15 @@ func (e *Engine) BaseFunctionMore2One(context context.Context, function Function
 }
 
 func (e *Engine) BaseFunctionMore(context context.Context, function Function, input []*pb.Struct) ([]*pb.Struct, error) {
-	for i, in := range input {
-		if in.StructType == pb.StructType_function && !in.Closure {
-			o, err := e.FunctionOne(context, in)
-			if err != nil {
-				return nil, err
-			}
-			input[i] = o
-		}
-	}
+	//for i, in := range input {
+	//	if in.StructType == pb.StructType_function && !in.Closure {
+	//		o, err := e.FunctionOne(context, in)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		input[i] = o
+	//	}
+	//}
 	return function(context, e, input)
 }
 
@@ -201,8 +201,21 @@ func (e *Engine) FunctionOne(context context.Context, function *pb.Struct) (*pb.
 	if f, ok := e.LoadFunc(function.Func()); !ok {
 		return nil, errors.New(fmt.Sprintf("%v nofind", function.Func()))
 	} else {
+		//覆盖环境变量
 		if function.Args != nil {
 			context = MergeToContext(context, function.Args)
+		}
+		//初始化局部变量
+		if function.Let != nil {
+			let := map[string]*pb.Struct{}
+			for k, v := range function.Let {
+				varName := fmt.Sprintf("__%v__", k)
+				let[varName] = &pb.Struct{
+					StructType: pb.StructType_pointer,
+					Pointer:    v,
+				}
+			}
+			context = MergeToContext(context, let)
 		}
 		output, err := e.BaseFunctionMore2One(context, f, function.GetFuncInput())
 		if err != nil {
@@ -219,8 +232,21 @@ func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*
 	if f, ok := e.LoadFunc(function.Func()); !ok {
 		return nil, errors.New(fmt.Sprintf("func nofind: %v", function.Func()))
 	} else {
+		//覆盖环境变量
 		if function.Args != nil {
 			context = MergeToContext(context, function.Args)
+		}
+		//初始化局部变量
+		if function.Let != nil {
+			let := map[string]*pb.Struct{}
+			for k, v := range function.Let {
+				varName := fmt.Sprintf("__%v__", k)
+				let[varName] = &pb.Struct{
+					StructType: pb.StructType_pointer,
+					Pointer:    v,
+				}
+			}
+			context = MergeToContext(context, let)
 		}
 		return e.BaseFunctionMore(context, f, function.GetFuncInput())
 	}
@@ -230,11 +256,24 @@ func (e *Engine) BlockOne(context context.Context, block *pb.Struct) (*pb.Struct
 	if f, ok := e.LoadBlock(block.Func()); !ok {
 		return nil, errors.New(fmt.Sprintf("%v nofind", block.Func()))
 	} else {
+		//覆盖环境变量
 		if block.Args != nil {
 			context = MergeToContext(context, block.Args)
 		}
 		if f.Args != nil {
 			context = MergeToContext(context, f.Args)
+		}
+		//初始化局部变量
+		if f.Let != nil {
+			let := map[string]*pb.Struct{}
+			for k, v := range f.Let {
+				varName := fmt.Sprintf("__%v__", k)
+				let[varName] = &pb.Struct{
+					StructType: pb.StructType_pointer,
+					Pointer:    v,
+				}
+			}
+			context = MergeToContext(context, let)
 		}
 		return e.Exec(context, f)
 	}

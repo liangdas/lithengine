@@ -40,15 +40,80 @@ func init() {
 		"case":     Case,
 		"int64":    Int64,
 		"getArgs":  Args,
+		"set":      Set,
+		"get":      Get,
 		"isType":   IsType,
 		"in":       In,
 		"chain":    Chain,
 		"getHash":  GetHash,
+		"exec":     Exec,
 	}
 	_blockMap = map[string]*pb.Struct{}
 }
 
+func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 2 {
+		return nil, errors.New("set input len  < 2")
+	}
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	b := inputs[1]
+	if a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+	}
+	name := a.String_
+	m, ok := FromContext(context)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+	}
+	varName := fmt.Sprintf("__%v__", name)
+	if r, ok := m[varName]; !ok {
+		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+	} else {
+		r.Pointer = b
+		return []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_nil,
+			},
+		}, nil
+	}
+}
+
+func Get(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("get input len  < 1")
+	}
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	if a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+	}
+	name := a.String_
+	m, ok := FromContext(context)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+	}
+	varName := fmt.Sprintf("__%v__", name)
+	if r, ok := m[varName]; !ok {
+		if len(inputs) >= 2 {
+			return []*pb.Struct{inputs[1]}, nil
+		}
+		return nil, errors.New(fmt.Sprintf("get no '%v' variables", name))
+	} else {
+		return []*pb.Struct{
+			r.Pointer,
+		}, nil
+	}
+}
+
 func Args(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("get input len  < 1")
+	}
 	a, err := e.Exec(context, inputs[0])
 	if err != nil {
 		return nil, err
@@ -63,6 +128,13 @@ func Args(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 		return nil, errors.New("no args")
 	}
 	if r, ok := m[name]; !ok {
+		if len(inputs) >= 2 {
+			b, err := e.Exec(context, inputs[1])
+			if err != nil {
+				return nil, err
+			}
+			return []*pb.Struct{b}, nil
+		}
 		return nil, errors.New(fmt.Sprintf("args no '%v' variables", name))
 	} else {
 		return []*pb.Struct{
@@ -273,7 +345,6 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
-
 	switch a.StructType {
 	case pb.StructType_int64:
 		output.Bool = a.Int64 == b.Int64
@@ -282,13 +353,12 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	case pb.StructType_bool:
 		output.Bool = a.Bool == b.Bool
 	case pb.StructType_string:
-		output.Bool = strings.Compare(a.String_, b.String_) == 0
+		output.Bool = a.String_ == b.String_
 	case pb.StructType_nil:
 		output.Bool = true
 	default:
 		return nil, errors.New(fmt.Sprintf("%v cannot be eq", a.StructType.String()))
 	}
-
 	return []*pb.Struct{output}, nil
 }
 
@@ -587,7 +657,6 @@ func If(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if a.StructType != pb.StructType_bool {
 		return nil, errors.New(fmt.Sprintf("%v not bool", a.StructType.String()))
 	}
-
 	if a.Bool {
 		b, err := e.Exec(context, inputs[1])
 		if err != nil {
@@ -705,6 +774,15 @@ func Chain(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struc
 			return nil, err
 		}
 		if kvv.StructType == pb.StructType_return {
+			for i, out := range kvv.Return {
+				if out.StructType == pb.StructType_function && !out.Closure {
+					o, err := e.FunctionOne(context, out)
+					if err != nil {
+						return nil, err
+					}
+					kvv.Return[i] = o
+				}
+			}
 			return kvv.Return, nil
 		}
 	}
@@ -713,9 +791,26 @@ func Chain(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struc
 	}}, nil
 }
 
+func Exec(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) != 1 {
+		return nil, errors.New("exec input len  != 1")
+	}
+	//先将输入表达式计算
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	//用计算结果，再次进行计算
+	a, err = e.Exec(context, a)
+	if err != nil {
+		return nil, err
+	}
+	return []*pb.Struct{a}, nil
+}
+
 func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
-	if len(inputs) != 2 {
-		return nil, errors.New("gethash input len  != 2")
+	if len(inputs) < 2 {
+		return nil, errors.New("gethash input len  < 2")
 	}
 
 	a, err := e.Exec(context, inputs[0])
@@ -740,8 +835,14 @@ func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Str
 	}
 	if v, ok := a.Hash[b.String_]; ok {
 		return []*pb.Struct{v}, nil
+	} else {
+		if len(inputs) >= 3 {
+			b, err := e.Exec(context, inputs[2])
+			if err != nil {
+				return nil, err
+			}
+			return []*pb.Struct{b}, nil
+		}
+		return nil, errors.New(fmt.Sprintf("hash no '%v' variables", b.String_))
 	}
-	return []*pb.Struct{&pb.Struct{
-		StructType: pb.StructType_nil,
-	}}, nil
 }

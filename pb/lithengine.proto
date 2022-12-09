@@ -41,6 +41,7 @@ message Struct {
   map<string,Struct> args=15;//环境变量
   repeated Struct return=16; //return具体数据
   Struct pointer=17;//指针类型
+  map<string,Struct> let=18;//初始化局部变量
 }
 
 // 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验
