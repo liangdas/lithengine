@@ -104,19 +104,7 @@ func Add(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 		case pb.StructType_string:
 			return nil, errors.New("string can't add")
 		case pb.StructType_function:
-			o, err := e.FunctionOne(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Add, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
-		case pb.StructType_block:
-			o, err := e.BlockOne(context, input)
+			o, err := e.Exec(context, input)
 			if err != nil {
 				return nil, err
 			}
@@ -150,19 +138,7 @@ func Reduce(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Stru
 		case pb.StructType_string:
 			return nil, errors.New("string can't reduce")
 		case pb.StructType_function:
-			o, err := e.FunctionOne(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Reduce, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
-		case pb.StructType_block:
-			o, err := e.BlockOne(context, input)
+			o, err := e.Exec(context, input)
 			if err != nil {
 				return nil, err
 			}
@@ -196,19 +172,7 @@ func Multiply(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.St
 		case pb.StructType_string:
 			return nil, errors.New("string can't multiply")
 		case pb.StructType_function:
-			o, err := e.FunctionOne(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Multiply, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
-		case pb.StructType_block:
-			o, err := e.BlockOne(context, input)
+			o, err := e.Exec(context, input)
 			if err != nil {
 				return nil, err
 			}
@@ -242,19 +206,7 @@ func Divide(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Stru
 		case pb.StructType_string:
 			return nil, errors.New("string can't divide")
 		case pb.StructType_function:
-			o, err := e.FunctionOne(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Divide, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
-		case pb.StructType_block:
-			o, err := e.BlockOne(context, input)
+			o, err := e.Exec(context, input)
 			if err != nil {
 				return nil, err
 			}

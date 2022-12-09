@@ -66,13 +66,6 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 			hasType = true
 		}
 	}
-	if i, ok := m["block"]; ok {
-		s.Block = i.(string)
-		if !hasType {
-			s.StructType = StructType_block
-			hasType = true
-		}
-	}
 	if i, ok := m["func"]; ok {
 		s.FuncId = i.(string)
 		if !hasType {

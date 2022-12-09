@@ -465,13 +465,11 @@ func TestBlock(t *testing.T) {
 			}`)
 	assert.Empty(t, err)
 	engine := NewEngine(rFuncMap, rBlockMap)
-	output, err := engine.Exec(context.Background(), &pb.Struct{
-		StructType: pb.StructType_block,
-		Block:      "PayAndAge25",
-	})
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{"func":"PayAndAge25"}`,
+	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
-	fmt.Println("---block test ", output)
 }
 
 // TestArgs 环境变量和变量传递示例
@@ -517,10 +515,6 @@ func TestArgs(t *testing.T) {
 				]
 			}`)
 	assert.Empty(t, err)
-	args := &pb.Struct{
-		StructType: pb.StructType_block,
-		Block:      "PayAndAge25",
-	}
 	engine := NewEngine(rFuncMap, rBlockMap)
 	ctx := MergeToContext(context.Background(), map[string]*pb.Struct{
 		"uid": &pb.Struct{
@@ -528,11 +522,11 @@ func TestArgs(t *testing.T) {
 			String_:    "111",
 		},
 	})
-	output, err := engine.Exec(ctx, args)
+	output, err := engine.ExecParse(ctx, []byte(
+		`{"func":"PayAndAge25"}`,
+	))
 	assert.Empty(t, err)
-	fmt.Println("---args test ", output)
-	b, _ := json.MarshalIndent(args, "", "    ")
-	fmt.Println(string(b))
+	assert.Equal(t, output.Bool, true)
 }
 
 func TestEngine_ExecParse(t *testing.T) {
@@ -712,8 +706,8 @@ func TestClosure(t *testing.T) {
 			}`)
 	assert.Empty(t, err)
 	args := &pb.Struct{
-		StructType: pb.StructType_block,
-		Block:      "PayAndAge25",
+		StructType: pb.StructType_function,
+		FuncId:     "PayAndAge25",
 	}
 	engine := NewEngine(rFuncMap, rBlockMap)
 	ctx := MergeToContext(context.Background(), map[string]*pb.Struct{

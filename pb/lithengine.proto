@@ -13,7 +13,6 @@ enum StructType {
     list=5;
     hash=6;
     function=7; //函数，会在【传参前先执行】得到结果，然后将结果传参给调用函数
-    block=9;//代码块，本质是一系列函数逻辑组合 使用者可以定义一些通用的代码块方便后续复用
     return=10;//reture类型，在chain函数顺序执行过程中，如果表达式返回return类型将终止后续流程，直接返回reture类型中的结果
     pointer=11;//指针 配合set get可以用来做变量功能
 }
@@ -29,7 +28,6 @@ message Struct {
   bool nil=6;
   repeated Struct list=7;
   map<string,Struct> hash=8;
-  string block=9;
   // @inject_tag: json:"func,omitempty"
   string funcId=10;  //函数ID
   // @inject_tag: json:"closure,omitempty"

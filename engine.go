@@ -159,13 +159,17 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 	}
 	switch st.StructType {
 	case pb.StructType_function:
-		o, err := e.FunctionOne(context, st)
-		if err != nil {
-			return nil, err
+		if _, ok := e.LoadFunc(st.Func()); ok {
+			o, err := e.FunctionOne(context, st)
+			if err != nil {
+				return nil, err
+			}
+			return o, nil
+		} else if _, ok := e.LoadBlock(st.Func()); ok {
+			return e.BlockOne(context, st)
+		} else {
+			return nil, errors.New(fmt.Sprintf("%v is not function or block ", st.Func()))
 		}
-		return o, nil
-	case pb.StructType_block:
-		return e.BlockOne(context, st)
 	default:
 		return st, nil
 	}
@@ -174,13 +178,17 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 func (e *Engine) Exec(context context.Context, st *pb.Struct) (*pb.Struct, error) {
 	switch st.StructType {
 	case pb.StructType_function:
-		o, err := e.FunctionOne(context, st)
-		if err != nil {
-			return nil, err
+		if _, ok := e.LoadFunc(st.Func()); ok {
+			o, err := e.FunctionOne(context, st)
+			if err != nil {
+				return nil, err
+			}
+			return o, nil
+		} else if _, ok := e.LoadBlock(st.Func()); ok {
+			return e.BlockOne(context, st)
+		} else {
+			return nil, errors.New(fmt.Sprintf("%v is not function or block ", st.Func()))
 		}
-		return o, nil
-	case pb.StructType_block:
-		return e.BlockOne(context, st)
 	default:
 		return st, nil
 	}
@@ -219,11 +227,8 @@ func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*
 }
 
 func (e *Engine) BlockOne(context context.Context, block *pb.Struct) (*pb.Struct, error) {
-	if block.StructType != pb.StructType_block {
-		return nil, errors.New(fmt.Sprintf("%v Cannot execute", block.StructType.String()))
-	}
-	if f, ok := e.LoadBlock(block.Block); !ok {
-		return nil, errors.New(fmt.Sprintf("%v nofind", block.Block))
+	if f, ok := e.LoadBlock(block.Func()); !ok {
+		return nil, errors.New(fmt.Sprintf("%v nofind", block.Func()))
 	} else {
 		if block.Args != nil {
 			context = MergeToContext(context, block.Args)
