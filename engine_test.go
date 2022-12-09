@@ -951,13 +951,12 @@ func TestGet(t *testing.T) {
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
 			"chain": [
-				{"return": [
-					{
+				{"return": {
 						"chain": [
 							{"return": {"get": {"string": "a"}}}
 						]
 					}
-				]}
+				}
 			],
 			"let":{"a":{"string":"a"}}
 		}`,
@@ -968,14 +967,13 @@ func TestGet(t *testing.T) {
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
 			"chain": [
-				{"return": [
-					{
+				{"return": {
 						"chain": [
 							{"return": {"get": {"string": "a"}}}
 						],
 						"let":{"a":{"string":"b"}}
 					}
-				]}
+				}
 			],
 			"let":{"a":{"string":"a"}}
 		}`,
@@ -986,15 +984,14 @@ func TestGet(t *testing.T) {
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
 			"chain": [
-				{"return": [
-					{
+				{"return": {
 						"chain": [
 							{"set": [{"string": "a"},{"string": "c"}]},
 							{"return": {"get": {"string": "a"}}}
 						],
 						"let":{"a":{"string":"b"}}
 					}
-				]}
+				}
 			],
 			"let":{"a":{"string":"a"}}
 		}`,
@@ -1011,13 +1008,12 @@ func TestGet(t *testing.T) {
 					],
 					"let":{"a":{"string":"b"}}
 				},
-				{"return": [
-					{
+				{"return": {
 						"chain": [
 							{"return": {"get": {"string": "a"}}}
 						]
 					}
-				]}
+				}
 			],
 			"let":{"a":{"string":"a"}}
 		}`,
@@ -1042,13 +1038,12 @@ func TestGet(t *testing.T) {
 					},
 					{"set": [{"string": "a"},{"string": "setToc"}]}
 				]},
-				{"return": [
-					{
+				{"return": {
 						"chain": [
 							{"return": {"get": {"string": "a"}}}
 						]
 					}
-				]}
+				}
 			],
 			"let":{"a":{"string":"a"}}
 		}`,
