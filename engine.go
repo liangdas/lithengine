@@ -102,7 +102,7 @@ func (e *Engine) LoadBlock(id string) (*pb.Struct, bool) {
 }
 
 func (e *Engine) BaseFunctionOne2One(context context.Context, function Function, input *pb.Struct) (*pb.Struct, error) {
-	if input.StructType == pb.StructType_function {
+	if input.StructType == pb.StructType_function && !input.Closure {
 		o, err := e.FunctionOne(context, input)
 		if err != nil {
 			return nil, err
@@ -121,7 +121,7 @@ func (e *Engine) BaseFunctionOne2One(context context.Context, function Function,
 
 func (e *Engine) BaseFunctionMore2One(context context.Context, function Function, input []*pb.Struct) (*pb.Struct, error) {
 	for i, in := range input {
-		if in.StructType == pb.StructType_function {
+		if in.StructType == pb.StructType_function && !in.Closure {
 			o, err := e.FunctionOne(context, in)
 			if err != nil {
 				return nil, err
@@ -141,7 +141,7 @@ func (e *Engine) BaseFunctionMore2One(context context.Context, function Function
 
 func (e *Engine) BaseFunctionMore(context context.Context, function Function, input []*pb.Struct) ([]*pb.Struct, error) {
 	for i, in := range input {
-		if in.StructType == pb.StructType_function {
+		if in.StructType == pb.StructType_function && !in.Closure {
 			o, err := e.FunctionOne(context, in)
 			if err != nil {
 				return nil, err
@@ -158,7 +158,7 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 		return nil, err
 	}
 	switch st.StructType {
-	case pb.StructType_function, pb.StructType_closure:
+	case pb.StructType_function:
 		o, err := e.FunctionOne(context, st)
 		if err != nil {
 			return nil, err
@@ -173,7 +173,7 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 
 func (e *Engine) Exec(context context.Context, st *pb.Struct) (*pb.Struct, error) {
 	switch st.StructType {
-	case pb.StructType_function, pb.StructType_closure:
+	case pb.StructType_function:
 		o, err := e.FunctionOne(context, st)
 		if err != nil {
 			return nil, err
@@ -187,7 +187,7 @@ func (e *Engine) Exec(context context.Context, st *pb.Struct) (*pb.Struct, error
 }
 
 func (e *Engine) FunctionOne(context context.Context, function *pb.Struct) (*pb.Struct, error) {
-	if function.StructType != pb.StructType_function && function.StructType != pb.StructType_closure {
+	if function.StructType != pb.StructType_function {
 		return nil, errors.New(fmt.Sprintf("%v Cannot execute", function.StructType.String()))
 	}
 	if f, ok := e.LoadFunc(function.Func()); !ok {
@@ -205,7 +205,7 @@ func (e *Engine) FunctionOne(context context.Context, function *pb.Struct) (*pb.
 }
 
 func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*pb.Struct, error) {
-	if function.StructType != pb.StructType_function && function.StructType != pb.StructType_closure {
+	if function.StructType != pb.StructType_function {
 		return nil, errors.New(fmt.Sprintf("%v Cannot execute", function.StructType.String()))
 	}
 	if f, ok := e.LoadFunc(function.Func()); !ok {

@@ -1,11 +1,11 @@
 package lithengine
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 func (s *Struct) Func() string {
 	switch s.StructType {
-	case StructType_closure:
-		return s.ClosureId
 	case StructType_function:
 		return s.FuncId
 	}
@@ -18,11 +18,14 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	MapToStruct(s, m)
+	_, err = MapToStruct(s, m)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
+func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 	hasType := false
 	if st, ok := m["type"]; ok {
 		s.StructType = StructType(int32(st.(float64)))
@@ -76,12 +79,8 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 			s.StructType = StructType_function
 			hasType = true
 		}
-	}
-	if i, ok := m["closure"]; ok {
-		s.ClosureId = i.(string)
-		if !hasType {
-			s.StructType = StructType_closure
-			hasType = true
+		if i, ok := m["closure"]; ok {
+			s.Closure = i.(bool)
 		}
 	}
 	if i, ok := m["name"]; ok {
@@ -95,7 +94,11 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 		s.List = []*Struct{}
 		for _, ip := range inputs {
 			o := new(Struct)
-			s.List = append(s.List, MapToStruct(o, ip.(map[string]interface{})))
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.List = append(s.List, ms)
 		}
 		if !hasType {
 			s.StructType = StructType_list
@@ -107,10 +110,26 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 		s.Hash = map[string]*Struct{}
 		for k, ip := range inputs {
 			o := new(Struct)
-			s.Hash[k] = MapToStruct(o, ip.(map[string]interface{}))
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.Hash[k] = ms
 		}
 		if !hasType {
 			s.StructType = StructType_hash
+			hasType = true
+		}
+	}
+	if i, ok := m["pointer"]; ok {
+		o := new(Struct)
+		ms, err := MapToStruct(o, i.(map[string]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		s.Pointer = ms
+		if !hasType {
+			s.StructType = StructType_pointer
 			hasType = true
 		}
 	}
@@ -119,7 +138,11 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 		s.Return = []*Struct{}
 		for _, ip := range inputs {
 			o := new(Struct)
-			s.Return = append(s.Return, MapToStruct(o, ip.(map[string]interface{})))
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.Return = append(s.Return, ms)
 		}
 		if !hasType {
 			s.StructType = StructType_return
@@ -131,7 +154,11 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 		s.FuncInput = []*Struct{}
 		for _, ip := range inputs {
 			o := new(Struct)
-			s.FuncInput = append(s.FuncInput, MapToStruct(o, ip.(map[string]interface{})))
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.FuncInput = append(s.FuncInput, ms)
 		}
 	}
 	if i, ok := m["args"]; ok {
@@ -139,9 +166,12 @@ func MapToStruct(s *Struct, m map[string]interface{}) *Struct {
 		s.Args = map[string]*Struct{}
 		for k, ip := range inputs {
 			o := new(Struct)
-			s.Args[k] = MapToStruct(o, ip.(map[string]interface{}))
+			ms, err := MapToStruct(o, ip.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			s.Args[k] = ms
 		}
 	}
-
-	return s
+	return s, nil
 }

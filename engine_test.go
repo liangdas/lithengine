@@ -486,7 +486,7 @@ func TestArgs(t *testing.T) {
 						"name": "是否充值",
 						"input": [
 							{
-								"func": "args",
+								"func": "getArgs",
 								"input": [
 									{
 										"string": "uid"
@@ -669,14 +669,17 @@ func TestClosure(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"closure": "&&",
+				"func": "&&",
+				"closure":true,
 				"input": [
 					{
-						"closure": "isPay",
+						"func": "isPay",
+						"closure":true,
 						"name": "是否充值",
 						"input": [
 							{
-								"closure": "args",
+								"func": "getArgs",
+								"closure":true,
 								"input": [
 									{
 										"string": "uid"
@@ -686,10 +689,11 @@ func TestClosure(t *testing.T) {
 						]
 					},
 					{
-						"closure": "=",
+						"func": "=",
+						"closure":true,
 						"input": [
 							{
-								"closure": "+",
+								"func": "+",
 								"input": [
 									{
 										"int64": 10
@@ -720,9 +724,7 @@ func TestClosure(t *testing.T) {
 	})
 	output, err := engine.Exec(ctx, args)
 	assert.Empty(t, err)
-	fmt.Println("---args test ", output)
-	b, _ := json.MarshalIndent(args, "", "    ")
-	fmt.Println(string(b))
+	assert.Equal(t, output.Bool, true)
 }
 
 // TestChain 顺序执行器
@@ -812,4 +814,14 @@ func TestChain(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "c")
+}
+
+func TestPointer(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{"pointer": {"string":"a"}}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_pointer)
+	assert.Equal(t, output.Pointer.String_, "a")
 }

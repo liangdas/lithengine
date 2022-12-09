@@ -39,7 +39,7 @@ func init() {
 		"if":       If,
 		"case":     Case,
 		"int64":    Int64,
-		"args":     Args,
+		"getArgs":  Args,
 		"isType":   IsType,
 		"in":       In,
 		"chain":    Chain,

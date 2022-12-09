@@ -13,9 +13,9 @@ enum StructType {
     list=5;
     hash=6;
     function=7; //函数，会在【传参前先执行】得到结果，然后将结果传参给调用函数
-    closure=8;//延迟函数，会作为参数传递给执行函数，由执行函数选择性执行【传参前不执行】
     block=9;//代码块，本质是一系列函数逻辑组合 使用者可以定义一些通用的代码块方便后续复用
     return=10;//reture类型，在chain函数顺序执行过程中，如果表达式返回return类型将终止后续流程，直接返回reture类型中的结果
+    pointer=11;//指针 配合set get可以用来做变量功能
 }
 
 // 结构体定义
@@ -33,7 +33,7 @@ message Struct {
   // @inject_tag: json:"func,omitempty"
   string funcId=10;  //函数ID
   // @inject_tag: json:"closure,omitempty"
-  string closureId=11;  //closure函数ID
+  bool closure=11;  //closure函数 会作为参数传递给执行函数，由执行函数选择性执行【传参前不执行】
   // @inject_tag: json:"name,omitempty"
   string name=12; //函数名称
   // @inject_tag: json:"schema,omitempty"
@@ -42,6 +42,7 @@ message Struct {
   repeated Struct funcInput=14; //函数的输入
   map<string,Struct> args=15;//环境变量
   repeated Struct return=16; //return具体数据
+  Struct pointer=17;//指针类型
 }
 
 // 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验
