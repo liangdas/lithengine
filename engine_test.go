@@ -819,3 +819,23 @@ func TestPointer(t *testing.T) {
 	assert.Equal(t, output.StructType, pb.StructType_pointer)
 	assert.Equal(t, output.Pointer.String_, "a")
 }
+
+func TestFunc(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{"+": [{"int64":2},{"int64":2}]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.StructType, pb.StructType_double)
+	assert.Equal(t, output.Double, 4.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{"+": {"int64":2}}`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{"jkf": [{"int64":2},{"int64":2}]}`,
+	))
+	assert.NotEmpty(t, err)
+}

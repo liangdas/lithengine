@@ -2,6 +2,8 @@ package lithengine
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 )
 
 func (s *Struct) Func() string {
@@ -23,6 +25,25 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 		return err
 	}
 	return nil
+}
+
+var ReservedFields = []string{
+	"type",
+	"int64",
+	"string",
+	"double",
+	"bool",
+	"nil",
+	"func",
+	"name",
+	"schema",
+	"list",
+	"hash",
+	"pointer",
+	"return",
+	"input",
+	"args",
+	"closure",
 }
 
 func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
@@ -71,9 +92,6 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 		if !hasType {
 			s.StructType = StructType_function
 			hasType = true
-		}
-		if i, ok := m["closure"]; ok {
-			s.Closure = i.(bool)
 		}
 	}
 	if i, ok := m["name"]; ok {
@@ -164,6 +182,40 @@ func MapToStruct(s *Struct, m map[string]interface{}) (*Struct, error) {
 				return nil, err
 			}
 			s.Args[k] = ms
+		}
+	}
+
+	for k, i := range m {
+		isReservedField := false
+		for _, field := range ReservedFields {
+			if field == k {
+				isReservedField = true
+				break
+			}
+		}
+		if !isReservedField {
+			if s.FuncInput != nil {
+				return nil, errors.New(fmt.Sprintf(`The "input" field cannot be used, please use {"%v":[...]}`, k))
+			}
+			s.FuncId = k
+			if !hasType {
+				s.StructType = StructType_function
+				hasType = true
+			}
+			//不是保留字段统一设置为func类型
+			if inputs, ok := i.([]interface{}); ok {
+				s.FuncInput = []*Struct{}
+				for _, ip := range inputs {
+					o := new(Struct)
+					ms, err := MapToStruct(o, ip.(map[string]interface{}))
+					if err != nil {
+						return nil, err
+					}
+					s.FuncInput = append(s.FuncInput, ms)
+				}
+			} else {
+				return nil, errors.New(fmt.Sprintf(`The value of the "%v" field must be an array, eg {"%v":[...]}`, k, k))
+			}
 		}
 	}
 	return s, nil
