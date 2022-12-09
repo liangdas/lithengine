@@ -477,35 +477,19 @@ func TestArgs(t *testing.T) {
 	//	//block
 	err := RegisterBlockFromJson("PayAndAge25",
 		`{
-				"func": "&&",
-				"input": [
+				"&&":[
 					{
-						"func": "isPay",
 						"name": "是否充值",
-						"input": [
+						"isPay": [
 							{
-								"func": "getArgs",
-								"input": [
-									{
-										"string": "uid"
-									}
-								]
+								"getArgs": [{"string": "uid"}]
 							}
 						]
 					},
 					{
-						"func": "=",
-						"input": [
+						"=": [
 							{
-								"func": "+",
-								"input": [
-									{
-										"int64": 10
-									},
-									{
-										"double": 15
-									}
-								]
+								"+": [{"int64": 10},{"double": 15}]
 							},
 							{
 								"double": 25
@@ -570,8 +554,7 @@ func TestIn(t *testing.T) {
 	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "in",
-			"input": [
+			"in": [
 				{"string": "a"},
 				{"string": "a"},
 				{"string": "b"},
@@ -584,8 +567,7 @@ func TestIn(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "in",
-			"input": [
+			"in": [
 				{"string": "a"},
 				{"string": "d"},
 				{"string": "b"},
@@ -598,8 +580,7 @@ func TestIn(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "in",
-			"input": [
+			"in": [
 				{"string": "a"},
 				{"string": "d"},
 				{"string": "b"},
@@ -613,8 +594,7 @@ func TestIn(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "in",
-			"input": [
+			"in": [
 				{"int64": 3},
 				{"string": "d"},
 				{"string": "b"},
@@ -628,8 +608,7 @@ func TestIn(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "in",
-			"input": [
+			"in": [
 				{"bool": false},
 				{"string": "d"},
 				{"string": "b"},
@@ -647,8 +626,7 @@ func TestGetHash(t *testing.T) {
 	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "getHash",
-			"input": [
+			"getHash": [
 				{"hash": {"a":{"string": "good"},"b":{"string": "b"}}},
 				{"string": "a"}
 			]

@@ -10,11 +10,9 @@
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-        "func": "=",
-        "input": [
+        "=": [
             {
-                "func": "+",
-                "input": [
+                "+": [
                     {"int64": 10},
                     {"double": 15},
                     {"double": 5}
@@ -43,8 +41,7 @@ output, err := engine.ExecParse(context.Background(), []byte(
   + {"hash":{"a":{"string":"string"},"b":{"int64":666}}}
 + 函数
   + {
-    "func": "in",
-    "input": [。。。]
+    "in": [。。。]
     }
 + 延迟函数
   + 会作为参数传递给执行函数，由执行函数选择性执行
@@ -52,8 +49,8 @@ output, err := engine.ExecParse(context.Background(), []byte(
     + 缺点：需要执行函数编写逻辑去支持执行延迟函数
     + <strong>延迟函数跟普通函数没有任何区别，仅仅是执行时机不同而已</strong>
   + {
-    "closure": "in",
-    "input": [。。。]
+    "closure": true,
+    "in": [。。。]
     }
 + 代码块
 # 支持特性
