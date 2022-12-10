@@ -1202,3 +1202,43 @@ func TestGet(t *testing.T) {
 	assert.Equal(t, output.String_, "a")
 
 }
+
+func TestSetBlock(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain": [
+				{
+					"setBlock":[
+						"a+b",
+						{
+							"+": [
+								{"exec":{"get": "a"}},
+								{"exec":{"get": "b"}}
+							]
+						}
+					]
+				},
+				{
+					"setBlock":[
+						"a=b",
+						{
+							"=": [
+								{"exec":{"get": "a"}},
+								{"exec":{"get": "b"}}
+							]
+						}
+					]
+				},
+				{
+					"return":{
+						"let":{"a":{"let":{"a":5,"b":3},"a+b":[]},"b":8},
+						"a=b":[]
+						}
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}

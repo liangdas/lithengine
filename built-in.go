@@ -47,8 +47,30 @@ func init() {
 		"chain":    Chain,
 		"getHash":  GetHash,
 		"exec":     Exec,
+		"setBlock": SetBlock,
 	}
 	_blockMap = map[string]*pb.Struct{}
+}
+
+func SetBlock(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 2 {
+		return nil, errors.New("setBlock input len  < 2")
+	}
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	b := inputs[1]
+	if a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+	}
+	id := a.String_
+	e.RegisterBlock(id, b)
+	return []*pb.Struct{
+		&pb.Struct{
+			StructType: pb.StructType_nil,
+		},
+	}, nil
 }
 
 func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {

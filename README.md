@@ -50,6 +50,7 @@
   + exec   （执行表达式）
   + set （设置变量）
   + get （读取变量）
+  + setBlock (添加代码块)
 + 支持添加自定义函数
 
 # 使用示例
@@ -161,6 +162,79 @@ output, err := engine.ExecParse(context.Background(), []byte(
 ))
 
 结果 "aa"
+```
+
+# 代码块
+> 代码块是可复用的表达式，可以在golang环境中注入也可以在脚本中注入
+```go
+engine := NewBaseEngine()
+output, err := engine.ExecParse(context.Background(), []byte(
+    `{
+        "chain": [
+            {
+                "setBlock":[
+                    "a+b",
+                    {
+                        "+": [
+                            {"exec":{"get": "a"}},
+                            {"exec":{"get": "b"}}
+                        ]
+                    }
+                ]
+            },
+            {
+                "setBlock":[
+                    "a=b",
+                    {
+                        "=": [
+                            {"exec":{"get": "a"}},
+                            {"exec":{"get": "b"}}
+                        ]
+                    }
+                ]
+            },
+            {
+                "return":{
+                      "let":{
+                              "a":{
+                                  "let":{"a":5,"b":3},
+                                  "a+b":[]
+                              },
+                              "b":8
+                          },
+                      "a=b":[]
+                    }
+            }
+        ]
+    }`,
+))
+assert.Empty(t, err)
+assert.Equal(t, output.Bool, true)
+```
+
+> 代码块传参可以使用环境变量(args)或变量(let)，无法使用input，如下
+```
+//注入add代码块，它会读取变量a和b进行+操作
+{
+  "setBlock":[
+    "add",
+    {
+      "+": [
+        {"exec":{"get": "a"}},
+        {"exec":{"get": "b"}}
+      ]
+    }
+  ]
+}
+
+exec函数的作用在于如果入参是闭包函数(closure)，则能够正常执行此闭包函数，并且用得到的结果做+操作
+
+
+//调用a+b函数，传入参a=5 b=3
+{"add":[],"let":{"a":5,"b":3}}
+
+伪代码 
+add(a,b) ==> 8
 ```
 
 更多示例请见 engine_test.go 
