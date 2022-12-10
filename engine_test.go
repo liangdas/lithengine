@@ -559,9 +559,41 @@ func TestBlock(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
+			"let":{"a":0},
+			"chain":[
+				{"set":["a",{"let":{"a":5,"b":3},"a+b":[]}]},
+				{"return":{
+						"let":{"a":{"get":"a"},"b":8},
+						"a=b":[]
+						}
+				}
+			]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
 			"chain":[
 				{"return":{
 						"let":{"a":{"let":{"a":5,"b":3},"a+b":[]},"b":8},
+						"a=b":[]
+						}
+				}
+			]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"a":0},
+			"chain":[
+				{"set":["a",{"let":{"a":5,"b":3},"a+b":[]}]},
+				{"return":{
+						"let":{"a":{"closure":true,"get":"c"},"b":8,"c":{"get":"a"}},
 						"a=b":[]
 						}
 				}
@@ -987,7 +1019,7 @@ func TestExec(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"args":{"execFunc":{"set":["a","aa"]}},
+			"args":{"execFunc":{"closure":true,"set":["a","aa"]}},
 			"let":{"a":{"nil":true}},
 			"chain": [
 				{"exec": {"getArgs":"execFunc"}},
@@ -1000,7 +1032,7 @@ func TestExec(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"args":{"execFunc":{"set":["a","aa"]}},
+			"args":{"execFunc":{"closure":true,"set":["a","aa"]}},
 			"exec":
 				{
 					"let":{"a":{"nil":true}},

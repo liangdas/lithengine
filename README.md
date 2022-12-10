@@ -148,7 +148,7 @@ chain()
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-        "args":{"execFunc":{"set":["a","aa"]}},
+        "args":{"execFunc":{"closure":true,"set":["a","aa"]}},
         "exec":
             {
                 "let":{"a":{"nil":true}},

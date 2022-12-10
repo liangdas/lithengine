@@ -339,7 +339,6 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if len(inputs) != 2 {
 		return nil, errors.New("eq input len  != 2")
 	}
-
 	a, err := e.Exec(context, inputs[0])
 	if err != nil {
 		return nil, err
