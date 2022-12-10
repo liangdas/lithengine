@@ -260,10 +260,23 @@ func (e *Engine) BlockOne(context context.Context, block *pb.Struct) (*pb.Struct
 		if block.Args != nil {
 			context = MergeToContext(context, block.Args)
 		}
+		//覆盖环境变量
 		if f.Args != nil {
 			context = MergeToContext(context, f.Args)
 		}
+
 		//初始化局部变量
+		if block.Let != nil {
+			let := map[string]*pb.Struct{}
+			for k, v := range block.Let {
+				varName := fmt.Sprintf("__%v__", k)
+				let[varName] = &pb.Struct{
+					StructType: pb.StructType_pointer,
+					Pointer:    v,
+				}
+			}
+			context = MergeToContext(context, let)
+		}
 		if f.Let != nil {
 			let := map[string]*pb.Struct{}
 			for k, v := range f.Let {

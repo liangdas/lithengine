@@ -60,6 +60,13 @@ func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 		return nil, err
 	}
 	b := inputs[1]
+	if b.StructType == pb.StructType_function && !b.Closure {
+		o, err := e.Exec(context, b)
+		if err != nil {
+			return nil, err
+		}
+		b = o
+	}
 	if a.StructType != pb.StructType_string {
 		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
 	}
@@ -341,7 +348,6 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if err != nil {
 		return nil, err
 	}
-
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
@@ -776,7 +782,7 @@ func Chain(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struc
 		if kvv.StructType == pb.StructType_return {
 			for i, out := range kvv.Return {
 				if out.StructType == pb.StructType_function && !out.Closure {
-					o, err := e.FunctionOne(context, out)
+					o, err := e.Exec(context, out)
 					if err != nil {
 						return nil, err
 					}

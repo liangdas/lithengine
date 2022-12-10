@@ -314,6 +314,58 @@ func TestIf(t *testing.T) {
 	output, err = engine.Exec(context.Background(), If)
 	assert.Empty(t, err)
 	assert.Equal(t, output.StructType, pb.StructType_nil)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"a":"a"},
+			"chain": [
+				{"if":[
+					{
+						"=":[
+								{
+									"let":{"a":"b"},
+									"chain": {"return": {"get": "a"}}
+								},
+								"b"
+						]
+					},
+					{"set": ["a","setToc"]}
+				]},
+				{"return": {
+						"chain": {"return": {"get": "a"}}
+					}
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "setToc")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"a":"a"},
+			"chain": [
+				{"if":[
+					{
+						"=":[
+								{
+									"let":{"a":"b"},
+									"chain": {"return": {"get": "a"}}
+								},
+								"c"
+						]
+					},
+					{"set": ["a","setToc"]}
+				]},
+				{"return": {
+						"chain": {"return": {"get": "a"}}
+					}
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "a")
 }
 
 func TestCase(t *testing.T) {
@@ -435,45 +487,86 @@ func TestCase(t *testing.T) {
 
 // TestBlock 代码块注册和使用
 func TestBlock(t *testing.T) {
-	//	//block
-	err := RegisterBlockFromJson("PayAndAge25",
+	//block
+	engine := NewEngine(rFuncMap, rBlockMap)
+	err := engine.RegisterBlockFromJson("a+b",
 		`{
-				"func": "&&",
-				"input": [
-					{
-						"func": "isPay",
-						"name": "是否充值",
-						"input": [
-							{
-								"string": "111"
-							}
-						]
-					},
-					{
-						"func": "=",
-						"input": [
-							{
-								"func": "+",
-								"input": [
-									{
-										"int64": 10
-									},
-									{
-										"double": 15
-									}
-								]
-							},
-							{
-								"double": 25
-							}
-						]
-					}
+				"let":{"a":5,"b":5},
+				"+": [
+					{"exec":{"get": "a"}},
+					{"exec":{"get": "b"}}
 				]
 			}`)
 	assert.Empty(t, err)
-	engine := NewEngine(rFuncMap, rBlockMap)
 	output, err := engine.ExecParse(context.Background(), []byte(
-		`{"func":"PayAndAge25"}`,
+		`{
+			"let":{"a":5,"b":3},
+			"a+b":[]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 10.0)
+
+	err = engine.RegisterBlockFromJson("a+b",
+		`{
+				"+": [
+					{"exec":{"get": "a"}},
+					{"exec":{"get": "b"}}
+				]
+			}`)
+	assert.Empty(t, err)
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"a":5,"b":3},
+			"a+b":[]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 8.0)
+
+	err = engine.RegisterBlockFromJson("a=b",
+		`{
+				"=": [
+					{"exec":{"get": "a"}},
+					{"exec":{"get": "b"}}
+				]
+			}`)
+	assert.Empty(t, err)
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"a":5,"b":5},
+			"a=b":[]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"let":{"blockFunc":0},
+			"chain":[
+				{"set":["blockFunc",{"let":{"a":5,"b":3},"a+b":[]}]},
+				{"return":{
+						"let":{"a":{"get":"blockFunc"},"b":8},
+						"a=b":[]
+						}
+				}
+			]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"chain":[
+				{"return":{
+						"let":{"a":{"let":{"a":5,"b":3},"a+b":[]},"b":8},
+						"a=b":[]
+						}
+				}
+			]
+		 }`,
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
@@ -882,7 +975,7 @@ func TestExec(t *testing.T) {
 		`{
 			"let":{"execFunc":{"nil":true},"a":{"nil":true}},
 			"chain": [
-				{"set": ["execFunc",{"set":["a","aa"]}]},
+				{"set": ["execFunc",{"closure":true,"set":["a","aa"]}]},
 				{"return":{"get":"a"}},
 				{"exec": {"get":"execFunc"}},
 				{"return":{"get":"a"}}
@@ -1076,33 +1169,4 @@ func TestGet(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "a")
 
-	output, err = engine.ExecParse(context.Background(), []byte(
-		`{
-			"chain": [
-				{"if":[
-					{
-						"=":[
-								{
-									"chain": [
-										{"return": {"get": {"string": "a"}}}
-									],
-									"let":{"a":{"string":"b"}}
-								},
-								{"string":"b"}
-						]
-					},
-					{"set": [{"string": "a"},{"string": "setToc"}]}
-				]},
-				{"return": {
-						"chain": [
-							{"return": {"get": {"string": "a"}}}
-						]
-					}
-				}
-			],
-			"let":{"a":{"string":"a"}}
-		}`,
-	))
-	assert.Empty(t, err)
-	assert.Equal(t, output.String_, "setToc")
 }
