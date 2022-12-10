@@ -2,7 +2,6 @@ package lithengine
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	pb "github.com/liangdas/lithengine/golang"
@@ -103,6 +102,17 @@ func TestEq(t *testing.T) {
 	output, err := engine.Exec(context.Background(), eq)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+        "=": [
+          {"+": [10,15,5]},
+          30
+        ]
+	}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
 }
 
 func TestFunction(t *testing.T) {
@@ -156,8 +166,6 @@ func TestFunction(t *testing.T) {
 	output, err := engine.Exec(context.Background(), and)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
-	b, _ := json.MarshalIndent(and, "", "    ")
-	fmt.Println(string(b))
 }
 
 func TestAnd(t *testing.T) {
@@ -219,7 +227,6 @@ func TestOR(t *testing.T) {
 	output, err := engine.Exec(context.Background(), or)
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
-	fmt.Println("---or test ", output)
 }
 
 func TestNot(t *testing.T) {
@@ -566,10 +573,10 @@ func TestIn(t *testing.T) {
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
 			"in": [
-				{"string": "a"},
-				{"string": "a"},
-				{"string": "b"},
-				{"string": "c"}
+				"a",
+				"a",
+				"b",
+				"c"
 			]
 		}`,
 	))
@@ -596,7 +603,7 @@ func TestIn(t *testing.T) {
 				{"string": "d"},
 				{"string": "b"},
 				{"string": "c"},
-				{"list": [{"string": "a"},{"string": "d"},{"int64": 3}]}
+				{"list": ["a","d",3]}
 			]
 		}`,
 	))
@@ -624,7 +631,35 @@ func TestIn(t *testing.T) {
 				{"string": "d"},
 				{"string": "b"},
 				{"string": "c"},
-				{"list": [{"string": "a"},{"bool": false},{"int64": 3}]}
+				{"list": ["a",false,{"int64": 3}]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"in": [
+				3,
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"},
+				{"list": ["a",false,3]}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"in": [
+				{"int64":3},
+				{"string": "d"},
+				{"string": "b"},
+				{"string": "c"},
+				{"list": ["a",false,{"int64":3}]}
 			]
 		}`,
 	))
@@ -638,7 +673,7 @@ func TestGetHash(t *testing.T) {
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
 			"getHash": [
-				{"hash": {"a":{"string": "good"},"b":{"string": "b"}}},
+				{"hash": {"a":{"string": "good"},"b":"b"}},
 				{"string": "a"}
 			]
 		}`,
@@ -756,8 +791,8 @@ func TestChain(t *testing.T) {
 				{
 					"func":"if",
 					"input":[
-						{"bool": true},
-						{"return": {"string": "a"}}
+						true,
+						{"return": ["a"]}
 					]
 				},
 				{"string": "a"},
@@ -771,10 +806,9 @@ func TestChain(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "chain",
-			"input": [
+			"chain": [
 				{"string": "a"},
-				{"return": [{"string": "b"}]},
+				{"return": "b"},
 				{"string": "c"}
 			]
 		}`,
@@ -797,23 +831,14 @@ func TestChain(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
-			"func": "chain",
-			"input": [
+			"chain": [
 				{
-					"func":"if",
-					"input":[
-						{"bool": false},
-						{"return": {"string": "a"}}
-					]
+					"if":[false,{"return":  "a"}]
 				},
 				{
-					"func":"if",
-					"input":[
-						{"bool": false},
-						{"return": {"string": "b"}}
-					]
+					"if":[false,{"return": "b"}]
 				},
-				{"return": {"string": "c"}}
+				{"return": "c"}
 			]
 		}`,
 	))
@@ -842,12 +867,12 @@ func TestExec(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
+			"let":{"execFunc":{"nil":true},"a":{"nil":true}},
 			"chain": [
-				{"set": [{"string": "exec"},{"set":[{"string":"a"},{"string":"aa"}]}]},
-				{"exec": {"get":{"string":"exec"}}},
-				{"return":{"get":{"string":"a"}}}
-			],
-			"let":{"exec":{"nil":true},"a":{"nil":true}}
+				{"set": ["execFunc",{"set":["a","aa"]}]},
+				{"exec": {"get":"execFunc"}},
+				{"return":{"get":"a"}}
+			]
 		}`,
 	))
 	assert.Empty(t, err)
@@ -855,17 +880,47 @@ func TestExec(t *testing.T) {
 
 	output, err = engine.ExecParse(context.Background(), []byte(
 		`{
+			"let":{"execFunc":{"nil":true},"a":{"nil":true}},
 			"chain": [
-				{"set": [{"string": "exec"},{"set":[{"string":"a"},{"string":"aa"}]}]},
-				{"return":{"get":{"string":"a"}}},
-				{"exec": {"get":{"string":"exec"}}},
-				{"return":{"get":{"string":"a"}}}
-			],
-			"let":{"exec":{"nil":true},"a":{"nil":true}}
+				{"set": ["execFunc",{"set":["a","aa"]}]},
+				{"return":{"get":"a"}},
+				{"exec": {"get":"execFunc"}},
+				{"return":{"get":"a"}}
+			]
 		}`,
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.StructType, pb.StructType_nil)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"args":{"execFunc":{"set":["a","aa"]}},
+			"let":{"a":{"nil":true}},
+			"chain": [
+				{"exec": {"getArgs":"execFunc"}},
+				{"return":{"get":"a"}}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "aa")
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"args":{"execFunc":{"set":["a","aa"]}},
+			"exec":
+				{
+					"let":{"a":{"nil":true}},
+					"chain":[
+						{"exec": {"getArgs":"execFunc"}},
+						{"return":{"get":"a"}}
+					]
+				}
+		}`,
+	))
+	fmt.Println(output)
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "aa")
 }
 
 func TestPointer(t *testing.T) {
@@ -904,8 +959,8 @@ func TestSet(t *testing.T) {
 	output, err := engine.ExecParse(context.Background(), []byte(
 		`{
 			"chain": [
-				{"set": [{"string": "a"},{"string": "b"}]},
-				{"return": {"get": {"string": "a"}}}
+				{"set": ["a","b"]},
+				{"return": {"get": "a"}}
 			],
 			"let":{"a":{"nil":true}}
 		}`,
@@ -986,14 +1041,14 @@ func TestGet(t *testing.T) {
 			"chain": [
 				{"return": {
 						"chain": [
-							{"set": [{"string": "a"},{"string": "c"}]},
-							{"return": {"get": {"string": "a"}}}
+							{"set": ["a","c"]},
+							{"return": {"get": "a"}}
 						],
-						"let":{"a":{"string":"b"}}
+						"let":{"a":"b"}
 					}
 				}
 			],
-			"let":{"a":{"string":"a"}}
+			"let":{"a":"a"}
 		}`,
 	))
 	assert.Empty(t, err)
