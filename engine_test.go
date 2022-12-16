@@ -654,6 +654,19 @@ func TestArgs(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "9999")
+
+	ctx = MergeToContext(context.Background(), map[string]*pb.Struct{
+		"a": &pb.Struct{
+			StructType: pb.StructType_double,
+			Double:     10,
+		},
+	})
+
+	output, err = engine.ExecParse(ctx, []byte(
+		`{">":[{"getArgs":"a"},5]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
 }
 
 func TestEngine_ExecParse(t *testing.T) {

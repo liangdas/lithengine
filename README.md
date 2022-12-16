@@ -69,8 +69,51 @@ output, err := engine.ExecParse(context.Background(), []byte(
 	}`,
 ))
 ```
+# 函数调用的语法
+## 1. 无入参调用
+```
+语法1:
+
+{"+":[]}
+
+语法2:
+
+{"func":"+",input:[]}
+```
+
+## 2. 单个入参
+```
+语法1:
+
+{"getArgs":"clientId"}
+
+语法2:
+
+{"getArgs":["clientId"]}
+
+语法3:
+
+{"func":"getArgs",input:["clientId"]}
+```
+
+## 3. 多个入参
+```
+语法1:
+
+{"+":[1,1]}
+
+语法2:
+
+{"func":"+",input:[1,1]}
+
+```
+
 
 # 串行执行
+> chain 会按顺序执行传入的表达式
+> 
+>当遇到表达式返回{"return":[结果]}类型时终止后续表达式执行且使用return的结果作为chain的输出
+
 ```
 伪代码
 func chain(){
@@ -165,7 +208,7 @@ output, err := engine.ExecParse(context.Background(), []byte(
 ```
 
 # 代码块
-> 代码块是可复用的表达式，可以在golang环境中注入也可以在脚本中注入
+> 代码块是可复用的表达式，可以在golang环境中注册也可以在脚本中注册
 ```go
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
