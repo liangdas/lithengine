@@ -15,38 +15,28 @@ func init() {
 	e.RegisterFunc("IsIPBlack", IsIPBlack)
 	p, _ = ParseJson([]byte(
 		`{
-            "func": "||",
-            "input": [
+            "||": [
                 {
-                    "func": "&&",
-                    "input": [
+                    "&&": [
                         {
-                            "func": "IsIPBlack",
-                            "input": [
-                                {"string": "127.0.0.11"}
-                            ]
+                            "IsIPBlack": "127.0.0.11"
                         },
                         {
-                            "func": "=",
-                            "input": [
+                            "=": [
                                 {
-                                    "func": "+",
-                                    "input": [
-                                        {"int64": 10},
-                                        {"double": 15},
-                                        {"double": 5}
+                                    "+": [
+                                        10,
+                                        15,
+                                        5
                                     ]
                                 },
-                                {"double": 30}
+                                30.0
                             ]
                         }
                     ]
                 },
                 {
-                    "func": "IsIPBlack",
-                    "input": [
-                        {"string": "127.0.0.1"}
-                    ]
+                    "IsIPBlack": "127.0.0.1"
                 }
             ]
         }`,

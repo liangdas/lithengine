@@ -1,6 +1,21 @@
 # lithengine
 一款可以使用json编码的代码执行器，可以用来实现规则引擎
 
+特点：
+1. 简单
+2. 灵活
+3. 高效
+
+```text
+goos: darwin
+goarch: amd64
+pkg: github.com/liangdas/lithengine
+cpu: Intel(R) Core(TM) i5-1038NG7 CPU @ 2.00GHz
+BenchmarkRiskLogic
+BenchmarkRiskLogic-8   	 1768824	       611.0 ns/op
+PASS
+```
+
 #支持数据类型
 + nil    
   + {"nil":true}
