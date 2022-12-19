@@ -38,7 +38,7 @@ func init() {
 		"not":      Not,
 		"if":       If,
 		"case":     Case,
-		"int64":    Int64,
+		"toInt64":  Int64,
 		"getArgs":  Args,
 		"set":      Set,
 		"get":      Get,
