@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	pb "github.com/liangdas/lithengine/golang"
+	"strconv"
 	"strings"
 )
 
@@ -38,7 +39,8 @@ func init() {
 		"not":      Not,
 		"if":       If,
 		"case":     Case,
-		"toInt64":  Int64,
+		"toInt64":  ToInt64,
+		"toDouble": ToDouble,
 		"getArgs":  Args,
 		"set":      Set,
 		"get":      Get,
@@ -325,13 +327,13 @@ func Divide(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Stru
 	return []*pb.Struct{output}, nil
 }
 
-func Int64(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+func ToInt64(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
 	output := &pb.Struct{
 		StructType: pb.StructType_int64,
 		Int64:      0,
 	}
-	if len(inputs) != 2 {
-		return nil, errors.New("DoubleToInt64 input len  != 2")
+	if len(inputs) != 1 {
+		return nil, errors.New("ToInt64 input len  != 1")
 	}
 
 	a, err := e.Exec(context, inputs[0])
@@ -339,8 +341,8 @@ func Int64(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struc
 		return nil, err
 	}
 
-	if a.StructType != pb.StructType_double && a.StructType != pb.StructType_int64 {
-		return nil, errors.New(fmt.Sprintf("%v not be int64 or double", a.StructType.String()))
+	if a.StructType != pb.StructType_double && a.StructType != pb.StructType_int64 && a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be int64 or double or string", a.StructType.String()))
 	}
 	switch a.StructType {
 	case pb.StructType_double:
@@ -348,6 +350,46 @@ func Int64(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struc
 		break
 	case pb.StructType_int64:
 		output.Int64 = a.Int64
+	case pb.StructType_string:
+		f, err := strconv.ParseFloat(a.String_, 10)
+		if err != nil {
+			return nil, err
+		}
+		output.Int64 = int64(f)
+	}
+
+	return []*pb.Struct{output}, nil
+}
+
+func ToDouble(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	output := &pb.Struct{
+		StructType: pb.StructType_double,
+		Double:     0,
+	}
+	if len(inputs) != 1 {
+		return nil, errors.New("toDouble input len  != 1")
+	}
+
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	if a.StructType != pb.StructType_double && a.StructType != pb.StructType_int64 && a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be int64 or double or string", a.StructType.String()))
+	}
+	switch a.StructType {
+	case pb.StructType_double:
+		output.Double = a.Double
+		break
+	case pb.StructType_int64:
+		output.Double = float64(a.Int64)
+	case pb.StructType_string:
+		f, err := strconv.ParseFloat(a.String_, 10)
+		if err != nil {
+			return nil, err
+		}
+		output.Double = f
 	}
 
 	return []*pb.Struct{output}, nil

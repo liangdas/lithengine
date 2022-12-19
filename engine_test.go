@@ -1255,3 +1255,93 @@ func TestSetBlock(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
 }
+
+func TestToInt64(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toInt64":100.0
+				},
+				{
+					"int64":100
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toInt64":"100.0"
+				},
+				{
+					"int64":100
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toInt64":"100"
+				},
+				{
+					"int64":100
+				}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}
+
+func TestToDouble(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toDouble":100.0
+				},
+				100
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toDouble":"100.0"
+				},
+				100
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"=": [
+				{
+					"toDouble":"100"
+				},
+				100
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}
