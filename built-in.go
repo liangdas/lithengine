@@ -407,7 +407,11 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if err != nil {
 		return nil, err
 	}
+
+
 	b, err := e.Exec(context, inputs[1])
+	a = convert2Double(a)
+	b = convert2Double(b)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +452,8 @@ func Gt(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if err != nil {
 		return nil, err
 	}
-
+	a = convert2Double(a)
+	b = convert2Double(b)
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
@@ -484,7 +489,8 @@ func Gte(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 	if err != nil {
 		return nil, err
 	}
-
+	a = convert2Double(a)
+	b = convert2Double(b)
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
@@ -520,7 +526,8 @@ func Lt(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 	if err != nil {
 		return nil, err
 	}
-
+	a = convert2Double(a)
+	b = convert2Double(b)
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
@@ -556,7 +563,8 @@ func Lte(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 	if err != nil {
 		return nil, err
 	}
-
+	a = convert2Double(a)
+	b = convert2Double(b)
 	if a.StructType != b.StructType {
 		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
 	}
@@ -914,4 +922,17 @@ func GetHash(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Str
 		}
 		return nil, errors.New(fmt.Sprintf("hash no '%v' variables", b.String_))
 	}
+}
+
+// convert2Double 将int64改为float
+func convert2Double(a *pb.Struct) (ra *pb.Struct) {
+	ra = new(pb.Struct)
+	switch a.StructType {
+	case pb.StructType_int64:
+		ra.Double = float64(a.Int64)
+		ra.StructType = pb.StructType_double
+	default:
+		ra = a
+	}
+	return
 }
