@@ -5,10 +5,10 @@ option go_package = "github.com/liangdas/lithengine/lithengine";
 
 // 结构体类型，函数，代码块也被认为是一个特殊的结构体
 enum StructType {
-    int64 = 0;
-    string = 1;
+    bool=0;
+    int64 = 1;
     double=2;
-    bool=3;
+    string = 3;
     nil=4;
     list=5;
     hash=6;
