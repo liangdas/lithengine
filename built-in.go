@@ -50,8 +50,56 @@ func init() {
 		"getHash":  GetHash,
 		"exec":     Exec,
 		"setBlock": SetBlock,
+		"defun":    Defun,
 	}
 	_blockMap = map[string]*pb.Struct{}
+	err := RegisterBlockFromJson("!=",
+		`{
+				"schema":{
+					"inputType":[{"name":"a"},{"name":"b"}]
+				},
+				"not": {"eq":[{"get":"a"},{"get":"b"}]}
+			}`)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Defun funcName [inputType]  block
+// eg 定义
+//{"defun":[
+//	"notEq", //函数名
+//	[{"name":"a"},{"name":"b"}], //入参名称
+//	{"not":{"eq":[{"get":"a"},{"get":"b"}]}} //函数体
+//]
+//}
+// 使用
+// {"notEq":[3,4]}
+func Defun(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) != 3 {
+		return nil, errors.New("Defun input len  != 3")
+	}
+	a := inputs[0]
+	b := inputs[1]
+	c := inputs[2]
+	if a.StructType != pb.StructType_string {
+		return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+	}
+	if b.StructType != pb.StructType_list {
+		return nil, errors.New(fmt.Sprintf("%v not be list", a.StructType.String()))
+	}
+	funcName := a.String_
+	//d.Name = funcName
+	c.Schema = &pb.FunctionSchema{
+		InputType:  b.List,
+		OutputType: c.List,
+	}
+	e.RegisterBlock(funcName, c)
+	return []*pb.Struct{
+		&pb.Struct{
+			StructType: pb.StructType_nil,
+		},
+	}, nil
 }
 
 func SetBlock(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
@@ -97,19 +145,22 @@ func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 	name := a.String_
 	m, ok := FromContext(context)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"set":{"%v":{"nil":true}}}`, name, name))
 	}
 	varName := fmt.Sprintf("__%v__", name)
 	if r, ok := m[varName]; !ok {
-		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+		m[varName] = &pb.Struct{
+			StructType: pb.StructType_pointer,
+			Pointer:    b,
+		}
 	} else {
 		r.Pointer = b
-		return []*pb.Struct{
-			&pb.Struct{
-				StructType: pb.StructType_nil,
-			},
-		}, nil
 	}
+	return []*pb.Struct{
+		&pb.Struct{
+			StructType: pb.StructType_nil,
+		},
+	}, nil
 }
 
 func Get(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
@@ -126,7 +177,7 @@ func Get(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 	name := a.String_
 	m, ok := FromContext(context)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"chain":[...],"let":{"%v":{"nil":true}}}`, name, name))
+		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"set":{"%v":{"nil":true}}}`, name, name))
 	}
 	varName := fmt.Sprintf("__%v__", name)
 	if r, ok := m[varName]; !ok {
@@ -408,7 +459,6 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 		return nil, err
 	}
 
-
 	b, err := e.Exec(context, inputs[1])
 	a = convert2Double(a)
 	b = convert2Double(b)
@@ -416,7 +466,8 @@ func Eq(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 		return nil, err
 	}
 	if a.StructType != b.StructType {
-		return nil, errors.New(fmt.Sprintf("%v %v cannot be compared", a.StructType.String(), b.StructType.String()))
+		output.Bool = false
+		return []*pb.Struct{output}, nil
 	}
 	switch a.StructType {
 	case pb.StructType_int64:

@@ -153,6 +153,9 @@ func (e *Engine) BaseFunctionMore(context context.Context, function Function, in
 }
 
 func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error) {
+	if _, ok := FromContext(context); !ok {
+		context = NewContext(context, Metadata{})
+	}
 	st, err := ParseJson(s)
 	if err != nil {
 		return nil, err
@@ -176,6 +179,9 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 }
 
 func (e *Engine) Exec(context context.Context, st *pb.Struct) (*pb.Struct, error) {
+	if _, ok := FromContext(context); !ok {
+		context = NewContext(context, Metadata{})
+	}
 	switch st.StructType {
 	case pb.StructType_function:
 		if _, ok := e.LoadFunc(st.Func()); ok {
@@ -201,40 +207,42 @@ func (e *Engine) FunctionOne(context context.Context, function *pb.Struct) (*pb.
 	if f, ok := e.LoadFunc(function.Func()); !ok {
 		return nil, errors.New(fmt.Sprintf("%v nofind", function.Func()))
 	} else {
-		//覆盖环境变量
-		if function.Args != nil {
-			args := map[string]*pb.Struct{}
-			for i, in := range function.Args {
-				if in.StructType == pb.StructType_function && !in.Closure {
-					o, err := e.Exec(context, in)
-					if err != nil {
-						return nil, err
+		if function.Func() != "set" && function.Func() != "get" {
+			//覆盖环境变量
+			if function.Args != nil {
+				args := map[string]*pb.Struct{}
+				for i, in := range function.Args {
+					if in.StructType == pb.StructType_function && !in.Closure {
+						o, err := e.Exec(context, in)
+						if err != nil {
+							return nil, err
+						}
+						args[i] = o
+					} else {
+						args[i] = in
 					}
-					args[i] = o
-				} else {
-					args[i] = in
 				}
+				context = MergeToContext(context, args)
 			}
-			context = MergeToContext(context, args)
-		}
-		//初始化局部变量
-		if function.Let != nil {
-			let := map[string]*pb.Struct{}
-			for k, v := range function.Let {
-				if v.StructType == pb.StructType_function && !v.Closure {
-					o, err := e.Exec(context, v)
-					if err != nil {
-						return nil, err
-					}
-					v = o
-				}
-				varName := fmt.Sprintf("__%v__", k)
-				let[varName] = &pb.Struct{
-					StructType: pb.StructType_pointer,
-					Pointer:    v,
-				}
-			}
-			context = MergeToContext(context, let)
+			////初始化局部变量
+			//if function.Let != nil {
+			//	let := map[string]*pb.Struct{}
+			//	for k, v := range function.Let {
+			//		if v.StructType == pb.StructType_function && !v.Closure {
+			//			o, err := e.Exec(context, v)
+			//			if err != nil {
+			//				return nil, err
+			//			}
+			//			v = o
+			//		}
+			//		varName := fmt.Sprintf("__%v__", k)
+			//		let[varName] = &pb.Struct{
+			//			StructType: pb.StructType_pointer,
+			//			Pointer:    v,
+			//		}
+			//	}
+			//	context = MergeToContext(context, let)
+			//}
 		}
 		output, err := e.BaseFunctionMore2One(context, f, function.GetFuncInput())
 		if err != nil {
@@ -251,40 +259,42 @@ func (e *Engine) FunctionMore(context context.Context, function *pb.Struct) ([]*
 	if f, ok := e.LoadFunc(function.Func()); !ok {
 		return nil, errors.New(fmt.Sprintf("func nofind: %v", function.Func()))
 	} else {
-		//覆盖环境变量
-		if function.Args != nil {
-			args := map[string]*pb.Struct{}
-			for i, in := range function.Args {
-				if in.StructType == pb.StructType_function && !in.Closure {
-					o, err := e.Exec(context, in)
-					if err != nil {
-						return nil, err
+		if function.Func() != "set" && function.Func() != "get" {
+			//覆盖环境变量
+			if function.Args != nil {
+				args := map[string]*pb.Struct{}
+				for i, in := range function.Args {
+					if in.StructType == pb.StructType_function && !in.Closure {
+						o, err := e.Exec(context, in)
+						if err != nil {
+							return nil, err
+						}
+						args[i] = o
+					} else {
+						args[i] = in
 					}
-					args[i] = o
-				} else {
-					args[i] = in
 				}
+				context = MergeToContext(context, args)
 			}
-			context = MergeToContext(context, args)
-		}
-		//初始化局部变量
-		if function.Let != nil {
-			let := map[string]*pb.Struct{}
-			for k, v := range function.Let {
-				if v.StructType == pb.StructType_function && !v.Closure {
-					o, err := e.Exec(context, v)
-					if err != nil {
-						return nil, err
-					}
-					v = o
-				}
-				varName := fmt.Sprintf("__%v__", k)
-				let[varName] = &pb.Struct{
-					StructType: pb.StructType_pointer,
-					Pointer:    v,
-				}
-			}
-			context = MergeToContext(context, let)
+			////初始化局部变量
+			//if function.Let != nil {
+			//	let := map[string]*pb.Struct{}
+			//	for k, v := range function.Let {
+			//		if v.StructType == pb.StructType_function && !v.Closure {
+			//			o, err := e.Exec(context, v)
+			//			if err != nil {
+			//				return nil, err
+			//			}
+			//			v = o
+			//		}
+			//		varName := fmt.Sprintf("__%v__", k)
+			//		let[varName] = &pb.Struct{
+			//			StructType: pb.StructType_pointer,
+			//			Pointer:    v,
+			//		}
+			//	}
+			//	context = MergeToContext(context, let)
+			//}
 		}
 		return e.BaseFunctionMore(context, f, function.GetFuncInput())
 	}
@@ -326,44 +336,72 @@ func (e *Engine) BlockOne(context context.Context, block *pb.Struct) (*pb.Struct
 			}
 			context = MergeToContext(context, args)
 		}
+		//输入参数类型校验和展开
+		inputLen := len(block.FuncInput)
+		if f.Schema != nil && f.Schema.InputType != nil {
+			let := map[string]*pb.Struct{}
+			for i, k := range f.Schema.InputType {
+				if k.Name == "" {
+					return nil, errors.New(fmt.Sprintf("func '%v' input schema  is unnamed : %v", f.Func(), k))
+				}
+				if i >= inputLen {
+					return nil, errors.New(fmt.Sprintf("The number of func '%v' input must be  > %v : %v", f.Func(), i, inputLen))
+				}
+				//展开为局部变量
+				v := block.FuncInput[i]
+				if v.StructType == pb.StructType_function && !v.Closure {
+					o, err := e.Exec(context, v)
+					if err != nil {
+						return nil, err
+					}
+					v = o
+				}
+				varName := fmt.Sprintf("__%v__", k.Name)
+				let[varName] = &pb.Struct{
+					StructType: pb.StructType_pointer,
+					Pointer:    v,
+				}
+			}
+			context = MergeToContext(context, let)
+		}
 
-		//初始化局部变量
-		if block.Let != nil {
-			let := map[string]*pb.Struct{}
-			for k, v := range block.Let {
-				if v.StructType == pb.StructType_function && !v.Closure {
-					o, err := e.Exec(context, v)
-					if err != nil {
-						return nil, err
-					}
-					v = o
-				}
-				varName := fmt.Sprintf("__%v__", k)
-				let[varName] = &pb.Struct{
-					StructType: pb.StructType_pointer,
-					Pointer:    v,
-				}
-			}
-			context = MergeToContext(context, let)
-		}
-		if f.Let != nil {
-			let := map[string]*pb.Struct{}
-			for k, v := range f.Let {
-				if v.StructType == pb.StructType_function && !v.Closure {
-					o, err := e.Exec(context, v)
-					if err != nil {
-						return nil, err
-					}
-					v = o
-				}
-				varName := fmt.Sprintf("__%v__", k)
-				let[varName] = &pb.Struct{
-					StructType: pb.StructType_pointer,
-					Pointer:    v,
-				}
-			}
-			context = MergeToContext(context, let)
-		}
+		////初始化局部变量
+		//if block.Let != nil {
+		//	let := map[string]*pb.Struct{}
+		//	for k, v := range block.Let {
+		//		if v.StructType == pb.StructType_function && !v.Closure {
+		//			o, err := e.Exec(context, v)
+		//			if err != nil {
+		//				return nil, err
+		//			}
+		//			v = o
+		//		}
+		//		varName := fmt.Sprintf("__%v__", k)
+		//		let[varName] = &pb.Struct{
+		//			StructType: pb.StructType_pointer,
+		//			Pointer:    v,
+		//		}
+		//	}
+		//	context = MergeToContext(context, let)
+		//}
+		//if f.Let != nil {
+		//	let := map[string]*pb.Struct{}
+		//	for k, v := range f.Let {
+		//		if v.StructType == pb.StructType_function && !v.Closure {
+		//			o, err := e.Exec(context, v)
+		//			if err != nil {
+		//				return nil, err
+		//			}
+		//			v = o
+		//		}
+		//		varName := fmt.Sprintf("__%v__", k)
+		//		let[varName] = &pb.Struct{
+		//			StructType: pb.StructType_pointer,
+		//			Pointer:    v,
+		//		}
+		//	}
+		//	context = MergeToContext(context, let)
+		//}
 		return e.Exec(context, f)
 	}
 }

@@ -44,7 +44,7 @@ var ReservedFields = []string{
 	"input",
 	"args",
 	"closure",
-	"let",
+	//"let",
 }
 
 func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
@@ -64,6 +64,22 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 	case float64:
 		s.StructType = StructType_double
 		s.Double = st.(float64)
+		break
+	case []interface{}:
+		s.StructType = StructType_list
+		inputs, ok := st.([]interface{})
+		if !ok {
+			return nil, errors.New(fmt.Sprintf(`list %T not []interface{}`, st))
+		}
+		s.List = []*Struct{}
+		for ii, ip := range inputs {
+			o := new(Struct)
+			ms, err := MapToStruct(o, ip)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf(`The value of the list[%v] %v`, ii, err))
+			}
+			s.List = append(s.List, ms)
+		}
 		break
 	case map[string]interface{}:
 		m := st.(map[string]interface{})
@@ -157,11 +173,44 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 			s.Name = inputs
 		}
 		if i, ok := m["schema"]; ok {
-			inputs, ok := i.(string)
+			inputs, ok := i.(map[string]interface{})
 			if !ok {
-				return nil, errors.New(fmt.Sprintf(`schema %T not string`, i))
+				return nil, errors.New(fmt.Sprintf(`schema %T not {"input":[...],"output":[...]}`, i))
 			}
-			s.Schema = inputs
+			fs := &FunctionSchema{}
+			if input, ok := inputs["inputType"]; ok {
+				i, ok := input.([]interface{})
+				if !ok {
+					return nil, errors.New(fmt.Sprintf(`"input" %T not [...]`, i))
+				}
+				var l []*Struct
+				for ii, ip := range i {
+					o := new(Struct)
+					ms, err := MapToStruct(o, ip)
+					if err != nil {
+						return nil, errors.New(fmt.Sprintf(`The value of the list[%v] %v`, ii, err))
+					}
+					l = append(l, ms)
+				}
+				fs.InputType = l
+			}
+			if output, ok := inputs["outputType"]; ok {
+				i, ok := output.([]interface{})
+				if !ok {
+					return nil, errors.New(fmt.Sprintf(`"output" %T not [...]`, i))
+				}
+				var l []*Struct
+				for ii, ip := range i {
+					o := new(Struct)
+					ms, err := MapToStruct(o, ip)
+					if err != nil {
+						return nil, errors.New(fmt.Sprintf(`The value of the list[%v] %v`, ii, err))
+					}
+					l = append(l, ms)
+				}
+				fs.OutputType = l
+			}
+			s.Schema = fs
 		}
 		if i, ok := m["list"]; ok {
 			inputs, ok := i.([]interface{})
@@ -274,21 +323,21 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 				s.Args[k] = ms
 			}
 		}
-		if i, ok := m["let"]; ok {
-			inputs, ok := i.(map[string]interface{})
-			if !ok {
-				return nil, errors.New(fmt.Sprintf(`let %T not map[string]interface{}`, i))
-			}
-			s.Let = map[string]*Struct{}
-			for k, ip := range inputs {
-				o := new(Struct)
-				ms, err := MapToStruct(o, ip)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf(`let The value of the "%v" field %v`, k, err))
-				}
-				s.Let[k] = ms
-			}
-		}
+		//if i, ok := m["let"]; ok {
+		//	inputs, ok := i.(map[string]interface{})
+		//	if !ok {
+		//		return nil, errors.New(fmt.Sprintf(`let %T not map[string]interface{}`, i))
+		//	}
+		//	s.Let = map[string]*Struct{}
+		//	for k, ip := range inputs {
+		//		o := new(Struct)
+		//		ms, err := MapToStruct(o, ip)
+		//		if err != nil {
+		//			return nil, errors.New(fmt.Sprintf(`let The value of the "%v" field %v`, k, err))
+		//		}
+		//		s.Let[k] = ms
+		//	}
+		//}
 
 		for k, i := range m {
 			isReservedField := false
@@ -299,6 +348,9 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 				}
 			}
 			if !isReservedField {
+				if s.FuncId != "" && s.FuncId != k {
+					return nil, errors.New(fmt.Sprintf(`'%v' and '%v' cannot exist in a block`, s.FuncId, k))
+				}
 				if s.FuncInput != nil {
 					return nil, errors.New(fmt.Sprintf(`The "input" field cannot be used, please use {"%v":[...]}`, k))
 				}
@@ -331,7 +383,7 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 		}
 		break
 	default:
-		return nil, errors.New(fmt.Sprintf(`must be an string,int64,bool,double,{...}`))
+		return nil, errors.New(fmt.Sprintf(`must be an string,int64,bool,double,[...],{...}`))
 	}
 	return s, nil
 }

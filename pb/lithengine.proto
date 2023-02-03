@@ -1,18 +1,18 @@
 syntax = "proto3";
 package lithengine;
-
 option go_package = "github.com/liangdas/lithengine/lithengine";
 
 // 结构体类型，函数，代码块也被认为是一个特殊的结构体
 enum StructType {
-    bool=0;
-    int64 = 1;
-    double=2;
-    string = 3;
-    nil=4;
-    list=5;
-    hash=6;
-    function=7; //函数，会在【传参前先执行】得到结果，然后将结果传参给调用函数
+    undefined=0;
+    bool=1;
+    int64 = 2;
+    double=3;
+    string = 4;
+    nil=5;
+    list=6;
+    hash=7;
+    function=8; //函数，会在【传参前先执行】得到结果，然后将结果传参给调用函数
     return=10;//reture类型，在chain函数顺序执行过程中，如果表达式返回return类型将终止后续流程，直接返回reture类型中的结果
     pointer=11;//指针 配合set get可以用来做变量功能
 }
@@ -35,21 +35,18 @@ message Struct {
   // @inject_tag: json:"name,omitempty"
   string name=12; //函数名称
   // @inject_tag: json:"schema,omitempty"
-  string schema=13;  //函数定义
+  FunctionSchema schema=13;  //函数定义
   // @inject_tag: json:"input,omitempty"
   repeated Struct funcInput=14; //函数的输入
   map<string,Struct> args=15;//环境变量
   repeated Struct return=16; //return具体数据
   Struct pointer=17;//指针类型
-  map<string,Struct> let=18;//初始化局部变量
 }
 
 // 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验
 message FunctionSchema {
-    string id=1;
-    string name=2;
-    repeated Struct input=3;
-    repeated Struct output=4;
-    int64 number_of_inputs=5;
-    int64 number_of_outputs=6;
+    // @inject_tag: json:"inputType,omitempty"
+    repeated Struct inputType=3; //输入变量定义
+    // @inject_tag: json:"outputType,omitempty"
+    repeated Struct outputType=4;
 }

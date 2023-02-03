@@ -30,6 +30,7 @@ PASS
   + true
 + list
   + {"list":["string",666]}
+  + ["string",666]
 + hash
   + {"hash":{"a":"string","b":666}}
 + 函数
@@ -50,6 +51,7 @@ PASS
   + 乘，
   + 除，
   + =，
+  + !=，
   + \>,<,>=,<=,&&,||,
   + not,
   + if,
@@ -63,7 +65,7 @@ PASS
   + exec   （执行表达式）
   + set （设置变量）
   + get （读取变量）
-  + setBlock (添加代码块)
+  + defun (函数定义)
 + 支持添加自定义函数
 
 # 使用示例
@@ -160,10 +162,26 @@ output, err := engine.ExecParse(context.Background(), []byte(
 ```
 
 # 变量操作
+```text
+设置变量
+{
+  "set":[
+    "name", //第一个参数是变量名
+    "value" //第二个参数是变量值
+  ]
+}
+
+获取变量
+{
+  "get":[
+    "name", //第一个参数是变量名
+    "defaultValue" //第二个参数是当变量不存在时返回的默认值，这是可选入参，不传时当变量不存在时返回 {"nil":true}
+  ]
+}
+```
 ```
 伪代码
 func chain(){
-  a=nil
   a="b"
   return a
 }
@@ -173,7 +191,6 @@ func chain(){
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-          "let":{"a":{"nil":true}}
           "chain": [
               {"set": ["a","b"]},
               {"return": {"get": "a"}}
@@ -187,12 +204,11 @@ output, err := engine.ExecParse(context.Background(), []byte(
 # 执行闭包表达式
 ```
 伪代码
-func execFunc{
+func execFunc(){
   a="aa"
 }
 
 func chain(){
-  a=nil
   getArgs("execFunc")()
   return a
 }
@@ -208,7 +224,6 @@ output, err := engine.ExecParse(context.Background(), []byte(
         "args":{"execFunc":{"closure":true,"set":["a","aa"]}},
         "exec":
             {
-                "let":{"a":{"nil":true}},
                 "chain":[
                     {"exec": {"getArgs":"execFunc"}},
                     {"return":{"get":"a"}}
@@ -220,47 +235,42 @@ output, err := engine.ExecParse(context.Background(), []byte(
 结果 "aa"
 ```
 
-# 代码块
-> 代码块是可复用的表达式，可以在golang环境中注册也可以在脚本中注册
+# 定义函数
+```text
+ Defun funcName [inputType]  block
+ eg 定义
+{
+    "defun":[
+      "notEq", //函数名
+      [{"name":"a"},{"name":"b"}], //入参名称
+      {"not":{"eq":[{"get":"a"},{"get":"b"}]}} //函数体
+    ]
+}
+ 使用
+ {"notEq":[3,4]}
+```
+```
+伪代码
+func notEq(a,b){
+  return a!=b;
+}
+```
+
 ```go
 engine := NewBaseEngine()
 output, err := engine.ExecParse(context.Background(), []byte(
     `{
-        "chain": [
-            {
-                "setBlock":[
-                    "a+b",
-                    {
-                        "+": [
-                            {"exec":{"get": "a"}},
-                            {"exec":{"get": "b"}}
-                        ]
-                    }
-                ]
-            },
-            {
-                "setBlock":[
-                    "a=b",
-                    {
-                        "=": [
-                            {"exec":{"get": "a"}},
-                            {"exec":{"get": "b"}}
-                        ]
-                    }
-                ]
-            },
-            {
-                "return":{
-                      "let":{
-                              "a":{
-                                  "let":{"a":5,"b":3},
-                                  "a+b":[]
-                              },
-                              "b":8
-                          },
-                      "a=b":[]
-                    }
-            }
+    "chain": [
+        {
+            "defun":[
+                "notEq",
+                [{"name":"a"},{"name":"b"}],
+                {"not":{"eq":[{"get":"a"},{"get":"b"}]}}
+            ]
+        },
+        {
+            "return":{"notEq":[3,4]}
+        }
         ]
     }`,
 ))
@@ -268,30 +278,6 @@ assert.Empty(t, err)
 assert.Equal(t, output.Bool, true)
 ```
 
-> 代码块传参可以使用环境变量(args)或变量(let)，无法使用input，如下
-```
-//注入add代码块，它会读取变量a和b进行+操作
-{
-  "setBlock":[
-    "add",
-    {
-      "+": [
-        {"exec":{"get": "a"}},
-        {"exec":{"get": "b"}}
-      ]
-    }
-  ]
-}
-
-exec函数的作用在于如果入参是闭包函数(closure)，则能够正常执行此闭包函数，并且用得到的结果做+操作
-
-
-//调用a+b函数，传入参a=5 b=3
-{"add":[],"let":{"a":5,"b":3}}
-
-伪代码 
-add(a,b) ==> 8
-```
 
 更多示例请见 engine_test.go 
 
