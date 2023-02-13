@@ -1483,7 +1483,7 @@ func TestMetadata_GetInterface(t *testing.T) {
 		if a.StructType != pb.StructType_string {
 			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
 		}
-		str, ok := md.GetInterface(a.String_)
+		str, ok := md.GetExtra(a.String_)
 		if !ok {
 			if len(inputs) >= 2 {
 				return []*pb.Struct{
@@ -1511,7 +1511,7 @@ func TestMetadata_GetInterface(t *testing.T) {
 		if a.StructType != pb.StructType_string {
 			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
 		}
-		md.RemoveInterface(a.String_)
+		md.RemoveExtra(a.String_)
 		return []*pb.Struct{
 			&pb.Struct{
 				StructType: pb.StructType_bool,
@@ -1520,7 +1520,7 @@ func TestMetadata_GetInterface(t *testing.T) {
 		}, nil
 	})
 	md := New(map[string]*pb.Struct{})
-	md.SetInterface("interface", "this is interface string")
+	md.SetExtra("interface", "this is interface string")
 	output, err := engine.ExecParse(NewContext(context.Background(), md), []byte(
 		`{"getMetadata": ["interface"]}`,
 	))
@@ -1533,7 +1533,7 @@ func TestMetadata_GetInterface(t *testing.T) {
 			String_:    "this is engine string",
 		},
 	})
-	md.SetInterface("interface", "this is interface string")
+	md.SetExtra("interface", "this is interface string")
 	output, err = engine.ExecParse(NewContext(context.Background(), md), []byte(
 		`{"getMetadata": ["interface"]}`,
 	))
@@ -1546,7 +1546,7 @@ func TestMetadata_GetInterface(t *testing.T) {
 			String_:    "this is engine string",
 		},
 	})
-	md.SetInterface("interface", "this is interface string")
+	md.SetExtra("interface", "this is interface string")
 	output, err = engine.ExecParse(NewContext(context.Background(), md), []byte(
 		`{
 			"chain": [

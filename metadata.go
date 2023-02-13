@@ -52,31 +52,31 @@ func (m Metadata) Remove(key string) {
 	delete(m, k)
 }
 
-// GetInterface returns the value associated with the passed key.
-func (m Metadata) GetInterface(key string) (interface{}, bool) {
+// GetExtra returns the value associated with the passed key.
+func (m Metadata) GetExtra(key string) (interface{}, bool) {
 	k := key
-	k = fmt.Sprintf("__%v__", k)
+	k = fmt.Sprintf("i_%v_f", k)
 	v, ok := m[k]
 	return v, ok
 }
 
-// SetInterface stores the key-value pair.
-func (m Metadata) SetInterface(key string, value interface{}) {
+// SetExtra stores the key-value pair.
+func (m Metadata) SetExtra(key string, value interface{}) {
 	if key == "" || value == nil {
 		return
 	}
 	k := key
-	k = fmt.Sprintf("__%v__", k)
+	k = fmt.Sprintf("i_%v_f", k)
 	m[k] = value
 }
 
-// RemoveInterface stores the key-value pair.
-func (m Metadata) RemoveInterface(key string) {
+// RemoveExtra stores the key-value pair.
+func (m Metadata) RemoveExtra(key string) {
 	if key == "" {
 		return
 	}
 	k := key
-	k = fmt.Sprintf("__%v__", k)
+	k = fmt.Sprintf("i_%v_f", k)
 	delete(m, k)
 }
 
@@ -94,8 +94,8 @@ func (m Metadata) Range(f func(k string, v *pb.Struct) bool) {
 	}
 }
 
-// RangeInterface iterate over element in metadata.
-func (m Metadata) RangeInterface(f func(k string, v interface{}) bool) {
+// RangeExtra iterate over element in metadata.
+func (m Metadata) RangeExtra(f func(k string, v interface{}) bool) {
 	for k, v := range m {
 		if okV, ok := v.(*pb.Struct); !ok {
 			continue
