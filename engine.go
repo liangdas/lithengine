@@ -154,7 +154,7 @@ func (e *Engine) BaseFunctionMore(context context.Context, function Function, in
 
 func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error) {
 	if _, ok := FromContext(context); !ok {
-		context = NewContext(context, Metadata{})
+		context = NewContext(context, New(map[string]*pb.Struct{}))
 	}
 	st, err := ParseJson(s)
 	if err != nil {
@@ -180,7 +180,7 @@ func (e *Engine) ExecParse(context context.Context, s []byte) (*pb.Struct, error
 
 func (e *Engine) Exec(context context.Context, st *pb.Struct) (*pb.Struct, error) {
 	if _, ok := FromContext(context); !ok {
-		context = NewContext(context, Metadata{})
+		context = NewContext(context, New(map[string]*pb.Struct{}))
 	}
 	switch st.StructType {
 	case pb.StructType_function:

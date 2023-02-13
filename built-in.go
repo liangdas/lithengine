@@ -149,10 +149,10 @@ func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 	}
 	varName := fmt.Sprintf("__%v__", name)
 	if r, ok := m.Get(varName); !ok {
-		m[varName] = &pb.Struct{
+		m.Set(varName, &pb.Struct{
 			StructType: pb.StructType_pointer,
 			Pointer:    b,
-		}
+		})
 	} else {
 		r.Pointer = b
 	}
