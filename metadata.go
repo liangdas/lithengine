@@ -70,7 +70,7 @@ func (m Metadata) SetInterface(key string, value interface{}) {
 	m[k] = value
 }
 
-// Remove stores the key-value pair.
+// RemoveInterface stores the key-value pair.
 func (m Metadata) RemoveInterface(key string) {
 	if key == "" {
 		return
