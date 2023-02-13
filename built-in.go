@@ -148,7 +148,7 @@ func Set(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"set":{"%v":{"nil":true}}}`, name, name))
 	}
 	varName := fmt.Sprintf("__%v__", name)
-	if r, ok := m[varName]; !ok {
+	if r, ok := m.Get(varName); !ok {
 		m[varName] = &pb.Struct{
 			StructType: pb.StructType_pointer,
 			Pointer:    b,
@@ -180,7 +180,7 @@ func Get(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 		return nil, errors.New(fmt.Sprintf(`variables '%v' must be initialized first eg. {"set":{"%v":{"nil":true}}}`, name, name))
 	}
 	varName := fmt.Sprintf("__%v__", name)
-	if r, ok := m[varName]; !ok {
+	if r, ok := m.Get(varName); !ok {
 		if len(inputs) >= 2 {
 			return []*pb.Struct{inputs[1]}, nil
 		}
@@ -209,7 +209,7 @@ func Args(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct
 	if !ok {
 		return nil, errors.New("no args")
 	}
-	if r, ok := m[name]; !ok {
+	if r, ok := m.Get(name); !ok {
 		if len(inputs) >= 2 {
 			b, err := e.Exec(context, inputs[1])
 			if err != nil {

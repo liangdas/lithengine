@@ -2,30 +2,36 @@ package lithengine
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/liangdas/lithengine/golang"
-	"strings"
 )
 
 // Metadata is our way of representing request headers internally.
 // They're used at the RPC level and translate back and forth
 // from Transport headers.
-type Metadata map[string]*pb.Struct
+type Metadata map[string]interface{}
 
 // New creates an MD from a given key-values map.
-func New(mds ...map[string]*pb.Struct) Metadata {
+func New(mds map[string]*pb.Struct) Metadata {
 	md := Metadata{}
-	for _, m := range mds {
-		for k, v := range m {
-			md.Set(k, v)
-		}
+	for k, v := range mds {
+		md.Set(k, v)
 	}
 	return md
 }
 
 // Get returns the value associated with the passed key.
-func (m Metadata) Get(key string) *pb.Struct {
-	k := strings.ToLower(key)
-	return m[k]
+func (m Metadata) Get(key string) (*pb.Struct, bool) {
+	k := key
+	if v, ok := m[k]; ok {
+		if okV, k := v.(*pb.Struct); k {
+			return okV, true
+		} else {
+			return nil, false
+		}
+	} else {
+		return nil, false
+	}
 }
 
 // Set stores the key-value pair.
@@ -33,16 +39,71 @@ func (m Metadata) Set(key string, value *pb.Struct) {
 	if key == "" || value == nil {
 		return
 	}
-	k := strings.ToLower(key)
+	k := key
 	m[k] = value
+}
+
+// Remove stores the key-value pair.
+func (m Metadata) Remove(key string) {
+	if key == "" {
+		return
+	}
+	k := key
+	delete(m, k)
+}
+
+// GetInterface returns the value associated with the passed key.
+func (m Metadata) GetInterface(key string) (interface{}, bool) {
+	k := key
+	k = fmt.Sprintf("__%v__", k)
+	v, ok := m[k]
+	return v, ok
+}
+
+// SetInterface stores the key-value pair.
+func (m Metadata) SetInterface(key string, value interface{}) {
+	if key == "" || value == nil {
+		return
+	}
+	k := key
+	k = fmt.Sprintf("__%v__", k)
+	m[k] = value
+}
+
+// Remove stores the key-value pair.
+func (m Metadata) RemoveInterface(key string) {
+	if key == "" {
+		return
+	}
+	k := key
+	k = fmt.Sprintf("__%v__", k)
+	delete(m, k)
 }
 
 // Range iterate over element in metadata.
 func (m Metadata) Range(f func(k string, v *pb.Struct) bool) {
 	for k, v := range m {
-		ret := f(k, v)
-		if !ret {
-			break
+		if okV, ok := v.(*pb.Struct); ok {
+			ret := f(k, okV)
+			if !ret {
+				break
+			}
+		} else {
+			continue
+		}
+	}
+}
+
+// RangeInterface iterate over element in metadata.
+func (m Metadata) RangeInterface(f func(k string, v interface{}) bool) {
+	for k, v := range m {
+		if okV, ok := v.(*pb.Struct); !ok {
+			continue
+		} else {
+			ret := f(k, okV)
+			if !ret {
+				break
+			}
 		}
 	}
 }
@@ -70,10 +131,21 @@ func FromContext(ctx context.Context) (Metadata, bool) {
 }
 
 // MergeToContext merge new metadata into ctx.
-func MergeToContext(ctx context.Context, cmd Metadata) context.Context {
+func MergeToContext(ctx context.Context, cmd map[string]*pb.Struct) context.Context {
 	md, _ := FromContext(ctx)
 	md = md.Clone()
 	for k, v := range cmd {
+		md[k] = v
+	}
+	return NewContext(ctx, md)
+}
+
+// MergeForInterface merge new metadata into ctx.
+func MergeForInterface(ctx context.Context, cmd map[string]interface{}) context.Context {
+	md, _ := FromContext(ctx)
+	md = md.Clone()
+	for k, v := range cmd {
+		k = fmt.Sprintf("__%v__", k)
 		md[k] = v
 	}
 	return NewContext(ctx, md)

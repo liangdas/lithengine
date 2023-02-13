@@ -1468,3 +1468,93 @@ func TestList(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
 }
+
+func TestMetadata_GetInterface(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	engine.RegisterFunc("getMetadata", func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+		md, ok := FromContext(context)
+		if !ok {
+			return nil, errors.New("no args")
+		}
+		a, err := e.Exec(context, inputs[0])
+		if err != nil {
+			return nil, err
+		}
+		if a.StructType != pb.StructType_string {
+			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+		}
+		str, ok := md.GetInterface(a.String_)
+		if !ok {
+			if len(inputs) >= 2 {
+				return []*pb.Struct{
+					inputs[1],
+				}, nil
+			}
+			return nil, errors.New("no args interface")
+		}
+		return []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_string,
+				String_:    str.(string),
+			},
+		}, nil
+	})
+	engine.RegisterFunc("removeMetadata", func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+		md, ok := FromContext(context)
+		if !ok {
+			return nil, errors.New("no args")
+		}
+		a, err := e.Exec(context, inputs[0])
+		if err != nil {
+			return nil, err
+		}
+		if a.StructType != pb.StructType_string {
+			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+		}
+		md.RemoveInterface(a.String_)
+		return []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_bool,
+				Bool:       true,
+			},
+		}, nil
+	})
+	md := New(map[string]*pb.Struct{})
+	md.SetInterface("interface", "this is interface string")
+	output, err := engine.ExecParse(NewContext(context.Background(), md), []byte(
+		`{"getMetadata": ["interface"]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "this is interface string")
+	//------测试引擎变量和原生变量重名时能否区分存储-------------
+	md = New(map[string]*pb.Struct{
+		"interface": &pb.Struct{
+			StructType: pb.StructType_string,
+			String_:    "this is engine string",
+		},
+	})
+	md.SetInterface("interface", "this is interface string")
+	output, err = engine.ExecParse(NewContext(context.Background(), md), []byte(
+		`{"getMetadata": ["interface"]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "this is interface string")
+	//------测试原生变量删除接口-------------
+	md = New(map[string]*pb.Struct{
+		"interface": &pb.Struct{
+			StructType: pb.StructType_string,
+			String_:    "this is engine string",
+		},
+	})
+	md.SetInterface("interface", "this is interface string")
+	output, err = engine.ExecParse(NewContext(context.Background(), md), []byte(
+		`{
+			"chain": [
+				{"removeMetadata": ["interface"]},
+				{"return": {"getMetadata": ["interface","no args interface"]}}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "no args interface")
+}
