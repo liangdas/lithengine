@@ -144,8 +144,8 @@ func MergeToContext(ctx context.Context, cmd map[string]*pb.Struct) context.Cont
 	return NewContext(ctx, md)
 }
 
-// MergeForInterface merge new metadata into ctx.
-func MergeForInterface(ctx context.Context, cmd map[string]interface{}) context.Context {
+// MergeForExtra merge new metadata into ctx.
+func MergeForExtra(ctx context.Context, cmd map[string]interface{}) context.Context {
 	md, ok := FromContext(ctx)
 	if ok {
 		md = md.Clone()
