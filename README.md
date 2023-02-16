@@ -278,6 +278,64 @@ assert.Empty(t, err)
 assert.Equal(t, output.Bool, true)
 ```
 
-
+# 透传golang结构体
+```text
+engine := NewEngine(rFuncMap, rBlockMap)
+	engine.RegisterFunc("getMetadata", func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+		md, ok := FromContext(context)
+		if !ok {
+			return nil, errors.New("no args")
+		}
+		a, err := e.Exec(context, inputs[0])
+		if err != nil {
+			return nil, err
+		}
+		if a.StructType != pb.StructType_string {
+			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+		}
+		str, ok := md.GetExtra(a.String_)
+		if !ok {
+			if len(inputs) >= 2 {
+				return []*pb.Struct{
+					inputs[1],
+				}, nil
+			}
+			return nil, errors.New("no args interface")
+		}
+		return []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_string,
+				String_:    str.(string),
+			},
+		}, nil
+	})
+	engine.RegisterFunc("removeMetadata", func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+		md, ok := FromContext(context)
+		if !ok {
+			return nil, errors.New("no args")
+		}
+		a, err := e.Exec(context, inputs[0])
+		if err != nil {
+			return nil, err
+		}
+		if a.StructType != pb.StructType_string {
+			return nil, errors.New(fmt.Sprintf("%v not be string", a.StructType.String()))
+		}
+		md.RemoveExtra(a.String_)
+		return []*pb.Struct{
+			&pb.Struct{
+				StructType: pb.StructType_bool,
+				Bool:       true,
+			},
+		}, nil
+	})
+	md := New(map[string]*pb.Struct{})
+	md.SetExtra("interface", "this is interface string")
+	output, err := engine.ExecParse(NewContext(context.Background(), md), []byte(
+		`{"getMetadata": ["interface"]}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "this is interface string")
+```
 更多示例请见 engine_test.go 
 
