@@ -69,6 +69,207 @@ func TestAdd(t *testing.T) {
 	})
 	assert.Empty(t, err)
 	assert.Equal(t, outputAddToInt64.Double, 25.0)
+
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"+":[5,5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 10.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"+":[5,5,2,3]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 15.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"+":[5,5,2,"3"]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"+":["5",5,2,3]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+}
+
+func TestReduce(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"-":[5,5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 0.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"-":[5,5,2,3]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, -5.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"-":[15,5,2,3]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 5.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"-":[15,5,2,"3"]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"-":["15",5,2,3]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+}
+
+func TestMultiply(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 25.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,-5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, -25.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,5,2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 50.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,5,2,2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 100.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,5,2,-2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, -100.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,5,-2,-2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 100.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":["5",5,-2,-2]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"*":[5,"5"",-2,-2]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+}
+
+func TestDivide(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 1.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,-5]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, -1.0)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,5,2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 0.5)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,5,2,2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 0.25)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,5,2,-2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, -0.25)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,5,-2,-2]
+		 }`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Double, 0.25)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":["5",5,-2,-2]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"/":[5,"5"",-2,-2]
+		 }`,
+	))
+	assert.NotEmpty(t, err)
 }
 
 func TestEq(t *testing.T) {

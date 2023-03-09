@@ -248,131 +248,128 @@ func Add(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct,
 		Double:     0,
 	}
 	for _, input := range inputs {
-		switch input.StructType {
+		a, err := e.Exec(context, input)
+		if err != nil {
+			return nil, err
+		}
+		switch a.StructType {
 		case pb.StructType_int64:
-			output.Double += float64(input.Int64)
+			output.Double += float64(a.Int64)
 		case pb.StructType_double:
-			output.Double += input.Double
-		case pb.StructType_bool:
-			return nil, errors.New("bool can't add")
-		case pb.StructType_string:
-			return nil, errors.New("string can't add")
-		case pb.StructType_function:
-			o, err := e.Exec(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Add, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
+			output.Double += a.Double
 		default:
-			return nil, errors.New(fmt.Sprintf("%v can't add", input.StructType.String()))
+			return nil, errors.New(fmt.Sprintf("%v can't +", a.StructType.String()))
 		}
 	}
 	return []*pb.Struct{output}, nil
 }
 
 func Reduce(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("- input len  < 1")
+	}
 	output := &pb.Struct{
 		StructType: pb.StructType_double,
 		Double:     0,
 	}
-	for _, input := range inputs {
-		switch input.StructType {
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	switch a.StructType {
+	case pb.StructType_int64:
+		output.Double = float64(a.Int64)
+	case pb.StructType_double:
+		output.Double = a.Double
+	default:
+		return nil, errors.New(fmt.Sprintf("%v can't -", a.StructType.String()))
+	}
+	for _, input := range inputs[1:] {
+		b, err := e.Exec(context, input)
+		if err != nil {
+			return nil, err
+		}
+		switch b.StructType {
 		case pb.StructType_int64:
-			output.Double -= float64(input.Int64)
+			output.Double -= float64(b.Int64)
 		case pb.StructType_double:
-			output.Double -= input.Double
-		case pb.StructType_bool:
-			return nil, errors.New("bool can't reduce")
-		case pb.StructType_string:
-			return nil, errors.New("string can't reduce")
-		case pb.StructType_function:
-			o, err := e.Exec(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Reduce, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
+			output.Double -= b.Double
 		default:
-			return nil, errors.New(fmt.Sprintf("%v can't reduce", input.StructType.String()))
+			return nil, errors.New(fmt.Sprintf("%v can't -", b.StructType.String()))
 		}
 	}
 	return []*pb.Struct{output}, nil
 }
 
 func Multiply(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("* input len  < 1")
+	}
 	output := &pb.Struct{
 		StructType: pb.StructType_double,
 		Double:     0,
 	}
-	for _, input := range inputs {
-		switch input.StructType {
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	switch a.StructType {
+	case pb.StructType_int64:
+		output.Double = float64(a.Int64)
+	case pb.StructType_double:
+		output.Double = a.Double
+	default:
+		return nil, errors.New(fmt.Sprintf("%v can't *", a.StructType.String()))
+	}
+	for _, input := range inputs[1:] {
+		b, err := e.Exec(context, input)
+		if err != nil {
+			return nil, err
+		}
+		switch b.StructType {
 		case pb.StructType_int64:
-			output.Double *= float64(input.Int64)
+			output.Double *= float64(b.Int64)
 		case pb.StructType_double:
-			output.Double *= input.Double
-		case pb.StructType_bool:
-			return nil, errors.New("bool can't multiply")
-		case pb.StructType_string:
-			return nil, errors.New("string can't multiply")
-		case pb.StructType_function:
-			o, err := e.Exec(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Multiply, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
+			output.Double *= b.Double
 		default:
-			return nil, errors.New(fmt.Sprintf("%v can't multiply", input.StructType.String()))
+			return nil, errors.New(fmt.Sprintf("%v can't *", b.StructType.String()))
 		}
 	}
 	return []*pb.Struct{output}, nil
 }
 
 func Divide(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+	if len(inputs) < 1 {
+		return nil, errors.New("/ input len  < 1")
+	}
 	output := &pb.Struct{
 		StructType: pb.StructType_double,
 		Double:     0,
 	}
-	for _, input := range inputs {
-		switch input.StructType {
+	a, err := e.Exec(context, inputs[0])
+	if err != nil {
+		return nil, err
+	}
+	switch a.StructType {
+	case pb.StructType_int64:
+		output.Double = float64(a.Int64)
+	case pb.StructType_double:
+		output.Double = a.Double
+	default:
+		return nil, errors.New(fmt.Sprintf("%v can't /", a.StructType.String()))
+	}
+	for _, input := range inputs[1:] {
+		b, err := e.Exec(context, input)
+		if err != nil {
+			return nil, err
+		}
+		switch b.StructType {
 		case pb.StructType_int64:
-			output.Double /= float64(input.Int64)
+			output.Double /= float64(b.Int64)
 		case pb.StructType_double:
-			output.Double /= input.Double
-		case pb.StructType_bool:
-			return nil, errors.New("bool can't divide")
-		case pb.StructType_string:
-			return nil, errors.New("string can't divide")
-		case pb.StructType_function:
-			o, err := e.Exec(context, input)
-			if err != nil {
-				return nil, err
-			}
-			oo, err := e.BaseFunctionMore2One(context, Divide, []*pb.Struct{
-				output, o,
-			})
-			if err != nil {
-				return nil, err
-			}
-			output = oo
+			output.Double /= b.Double
 		default:
-			return nil, errors.New(fmt.Sprintf("%v can't divide", input.StructType.String()))
+			return nil, errors.New(fmt.Sprintf("%v can't /", b.StructType.String()))
 		}
 	}
 	return []*pb.Struct{output}, nil
