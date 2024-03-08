@@ -1759,3 +1759,27 @@ func TestMetadata_GetInterface(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "no args interface")
 }
+
+func TestHookFunc(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	getArgs, ok := engine.LoadFunc("getArgs")
+	assert.Equal(t, ok, true)
+	engine.RegisterFunc("getArgs", func(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
+		r, err := getArgs(context, e, inputs)
+		assert.Empty(t, err)
+		assert.Equal(t, r[0].String_, "this is engine string")
+		r[0].String_ = "this is hook getArgs"
+		return r, err
+	})
+	md := New(map[string]*pb.Struct{
+		"interface": &pb.Struct{
+			StructType: pb.StructType_string,
+			String_:    "this is engine string",
+		},
+	})
+	output, err := engine.ExecParse(NewContext(context.Background(), md), []byte(
+		`{"getArgs": "interface"}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.String_, "this is hook getArgs")
+}
