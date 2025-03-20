@@ -1783,3 +1783,9 @@ func TestHookFunc(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.String_, "this is hook getArgs")
 }
+
+func TestStruct(t *testing.T) {
+	output, err := ParseJson([]byte(`{"func":"=","id":"1"}`))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Id, "1")
+}

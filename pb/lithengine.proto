@@ -41,6 +41,8 @@ message Struct {
   map<string,Struct> args=15;//环境变量
   repeated Struct return=16; //return具体数据
   Struct pointer=17;//指针类型
+  // @inject_tag: json:"id,omitempty"
+  string id=18; //Struct唯一ID,用于异常跟踪等功能
 }
 
 // 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验

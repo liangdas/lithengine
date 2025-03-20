@@ -28,6 +28,7 @@ func (s *Struct) UnmarshalJSON(b []byte) (err error) {
 }
 
 var ReservedFields = []string{
+	"id",
 	"type",
 	"int64",
 	"string",
@@ -166,11 +167,18 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 			}
 		}
 		if i, ok := m["name"]; ok {
-			inputs, ok := i.(string)
+			name, ok := i.(string)
 			if !ok {
 				return nil, errors.New(fmt.Sprintf(`name %T not string`, i))
 			}
-			s.Name = inputs
+			s.Name = name
+		}
+		if i, ok := m["id"]; ok {
+			id, ok := i.(string)
+			if !ok {
+				return nil, errors.New(fmt.Sprintf(`id %T not string`, i))
+			}
+			s.Id = id
 		}
 		if i, ok := m["schema"]; ok {
 			inputs, ok := i.(map[string]interface{})
