@@ -67,12 +67,14 @@ func init() {
 
 // Defun funcName [inputType]  block
 // eg 定义
-//{"defun":[
+// {"defun":[
+//
 //	"notEq", //函数名
 //	[{"name":"a"},{"name":"b"}], //入参名称
 //	{"not":{"eq":[{"get":"a"},{"get":"b"}]}} //函数体
-//]
-//}
+//
+// ]
+// }
 // 使用
 // {"notEq":[3,4]}
 func Defun(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
@@ -710,7 +712,11 @@ func In(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 
 	in := false
 	ins := inputs[1:]
-	for _, input := range ins {
+	for _, inp := range ins {
+		input, err := e.Exec(context, inp)
+		if err != nil {
+			return nil, err
+		}
 		switch input.StructType {
 		case pb.StructType_int64:
 			if a.StructType != input.StructType {
@@ -809,7 +815,7 @@ func oddNumber(n int) bool {
 }
 
 // Case keyform key1 action1  key2 action2 ...
-//(case day Sunday 1 Monday 2 Tuesday 3 Wednesday 4 Thursday 5 Friday 6 Saturday 7 Sunday
+// (case day Sunday 1 Monday 2 Tuesday 3 Wednesday 4 Thursday 5 Friday 6 Saturday 7 Sunday
 func Case(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, error) {
 	if len(inputs) < 1 {
 		return nil, errors.New("case input len  < 1")
