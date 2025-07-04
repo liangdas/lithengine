@@ -50,6 +50,9 @@ var ReservedFields = []string{
 
 func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 	switch st.(type) {
+	case nil:
+		s.StructType = StructType_nil
+		break
 	case string:
 		s.StructType = StructType_string
 		s.String_ = st.(string)
