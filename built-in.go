@@ -718,6 +718,12 @@ func In(context context.Context, e *Engine, inputs []*pb.Struct) ([]*pb.Struct, 
 			return nil, err
 		}
 		switch input.StructType {
+		case pb.StructType_nil, pb.StructType_undefined:
+			if a.StructType == pb.StructType_nil ||
+				a.StructType == pb.StructType_undefined {
+				in = true
+				break
+			}
 		case pb.StructType_int64:
 			if a.StructType != input.StructType {
 				continue

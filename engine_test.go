@@ -931,6 +931,28 @@ func TestIsType(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`{
+			"func": "isType",
+			"input": [
+				null,
+				{"nil": true}
+			]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
+}
+
+func TestNull(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	output, err := engine.ExecParse(context.Background(), []byte(
+		`{
+			"in":[null,"a",null]
+		}`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
 }
 
 func TestIn(t *testing.T) {
