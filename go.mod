@@ -1,6 +1,6 @@
 module github.com/liangdas/lithengine
 
-go 1.15
+go 1.20
 
 require (
 	github.com/stretchr/testify v1.8.1

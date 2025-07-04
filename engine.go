@@ -344,8 +344,14 @@ func (e *Engine) BlockOne(context context.Context, block *pb.Struct) (*pb.Struct
 				if k.Name == "" {
 					return nil, errors.New(fmt.Sprintf("func '%v' input schema  is unnamed : %v", f.Func(), k))
 				}
-				if i >= inputLen {
-					return nil, errors.New(fmt.Sprintf("The number of func '%v' input must be  > %v : %v", f.Func(), i, inputLen))
+				if k.Optional {
+					if i >= inputLen {
+						return nil, errors.New(fmt.Sprintf("The number of func '%v' input must be  > %v : %v", f.Func(), i, inputLen))
+					}
+				} else {
+					if i >= inputLen {
+						continue
+					}
 				}
 				//展开为局部变量
 				v := block.FuncInput[i]

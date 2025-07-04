@@ -43,6 +43,8 @@ message Struct {
   Struct pointer=17;//指针类型
   // @inject_tag: json:"id,omitempty"
   string id=18; //Struct唯一ID,用于异常跟踪等功能
+  // @inject_tag: json:"optional,omitempty"
+  bool optional=19; //用于Schema 参数是否必传设置
 }
 
 // 函数定义Schema，可以定义函数的输入/输出数据类型，用于后续参数校验

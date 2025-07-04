@@ -173,6 +173,15 @@ func MapToStruct(s *Struct, st interface{}) (*Struct, error) {
 			}
 			s.Name = name
 		}
+		if i, ok := m["optional"]; ok {
+			optional, ok := i.(bool)
+			if !ok {
+				return nil, errors.New(fmt.Sprintf(`optional %T not string`, i))
+			}
+			s.Optional = optional
+		} else {
+			s.Optional = true
+		}
 		if i, ok := m["id"]; ok {
 			id, ok := i.(string)
 			if !ok {

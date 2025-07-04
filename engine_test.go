@@ -1789,3 +1789,46 @@ func TestStruct(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, output.Id, "1")
 }
+
+func TestEngine_RegisterBlockFromJson(t *testing.T) {
+	engine := NewEngine(rFuncMap, rBlockMap)
+	_ = engine.RegisterBlockFromJson("a+b",
+		`{
+          "schema":{"inputType":[
+			{"name": "a"},
+			{"name": "b"},
+			{"name": "c", "optional": false}
+			]},
+		  "+": [
+			{"get": "a"},
+			{"get": "b"}
+		  ]
+		}`)
+	_, err := engine.ExecParse(context.Background(), []byte(
+		`{"a+b": [1]}`,
+	))
+	assert.NotEmpty(t, err)
+	_, err = engine.ExecParse(context.Background(), []byte(
+		`{"a+b": [1,2]}`,
+	))
+	assert.Empty(t, err)
+	_, err = engine.ExecParse(context.Background(), []byte(
+		`{"a+b": [1,2,3]}`,
+	))
+	assert.Empty(t, err)
+	_ = engine.RegisterBlockFromJson("a+b",
+		`{
+          "schema":{"inputType":[
+			{"name": "a"},
+			{"name": "b", "optional": false},
+			{"name": "c", "optional": false}
+			]},
+		  "+": [
+			{"get": "a"}
+		  ]
+		}`)
+	_, err = engine.ExecParse(context.Background(), []byte(
+		`{"a+b": [1]}`,
+	))
+	assert.Empty(t, err)
+}
