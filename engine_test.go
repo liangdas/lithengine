@@ -1030,6 +1030,30 @@ func TestIn(t *testing.T) {
 	))
 	assert.Empty(t, err)
 	assert.Equal(t, output.Bool, true)
+
+	output, err = engine.ExecParse(context.Background(), []byte(
+		`
+		{
+			"chain":[
+				{"set":["name","e"]},
+				{
+					"return":{
+						"in": [
+							{"int64":3},
+							{"string": "d"},
+							{"string": "b"},
+							{"string": "c"},
+							{"get": "name"},
+							{"list": ["a",false,{"int64":3}]}
+						]
+					}
+				}
+			]
+		}
+		`,
+	))
+	assert.Empty(t, err)
+	assert.Equal(t, output.Bool, true)
 }
 
 // TestArgs 环境变量和变量传递示例
